@@ -1,7 +1,13 @@
 # emb-neurotech-prosthetic-arm
 
-> **Status: planned. This repository is a brief, not an implementation.**
-> Nothing here is built yet. The sections below define what goes in it.
+> **Status: early. Some hardware assets imported, no firmware or software yet.**
+> The A1 arm development kit PCB and the sEMG device industrial design exist.
+> Everything else, including the analogue front end, servo driver, firmware,
+> kinematics library and ROS2 stack, is outstanding. See [STATUS.md](STATUS.md).
+
+Assets imported from [`A1DevKit`](https://github.com/CGainsWorks/A1DevKit) and
+[`OpenEMG`](https://github.com/CGainsWorks/OpenEMG), which remain the original
+working repositories.
 
 The full prosthetic arm programme in one repository: custom hardware for sEMG acquisition and servo drive, embedded firmware, C++ forward and inverse kinematics and dynamics, and a ROS2 control stack tying signal acquisition through to actuation. Check the investor and patent position before making this public.
 
