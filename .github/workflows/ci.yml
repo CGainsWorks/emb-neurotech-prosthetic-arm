@@ -84,11 +84,25 @@ jobs:
       - name: Every number in the documentation comes from a committed result
         run: python3 scripts/check_docs.py
 
-      - name: Shell scripts parse
+      - name: Shell scripts parse and are executable
+        # The executable bit is checked because git on Windows does not record
+        # one: a script committed from there arrives as 644 and every step
+        # above that invokes it fails with "permission denied", which looks
+        # like a broken script rather than a broken mode.
         run: |
-          for script in scripts/*.sh firmware/*.sh kinematics/*.sh; do
-            bash -n "$script" && echo "ok: $script"
+          status=0
+          for script in $(git ls-files '*.sh'); do
+            bash -n "$script" || status=1
+            mode=$(git ls-files -s "$script" | cut -d' ' -f1)
+            if [ "$mode" != "100755" ]; then
+              echo "::error file=$script::mode is $mode, should be 100755;" \
+                   "run git update-index --chmod=+x $script"
+              status=1
+            else
+              echo "ok: $script"
+            fi
           done
+          exit $status
 
   ros:
     name: ROS 2 workspace and the end-to-end simulation
