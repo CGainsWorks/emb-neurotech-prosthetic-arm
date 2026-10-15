@@ -116,15 +116,20 @@ Recorded here rather than left for a reader to find.
 - **2.2 kg.** Too heavy to wear, before the socket, the battery and the
   electronics.
 
-## Before making this repository public
+## Disclosure
 
-1. **Confirm the investor and patent position for NeuroTech Biowares Ltd.**
-   If a filing is pending or an investor agreement restricts disclosure, this
-   repository stays private. This has not been confirmed and is the blocking
-   item.
-2. No personally recorded sEMG is committed and none should be. Subject
+This repository is public as of 15 October 2026. Three conditions had to hold
+first and all three still do.
+
+1. **The investor and patent position for NeuroTech Biowares Ltd is
+   confirmed clear**, 15 October 2026. Nothing here is under a pending filing
+   or restricted by an investor agreement. If that changes, this repository
+   goes private again, and anything added to it in the meantime has to clear
+   the same question before it is pushed.
+2. **No personally recorded sEMG is committed and none should be.** Subject
    recordings are personal data. Every sEMG signal here is synthetic and is
-   labelled as such; the classifier uses the public Ninapro DB5 dataset and
-   lives in `ml-semg-gesture-classifier`.
-3. The clinical limitations statement is written and is linked from the first
-   screen of the README. It stays there.
+   labelled as such wherever it appears; the classifier uses the public
+   Ninapro DB5 dataset and lives in `ml-semg-gesture-classifier`.
+3. **The clinical limitations statement stays on the first screen of the
+   README.** This is a research prototype that has never been worn, and a
+   public repository is exactly where that needs to be impossible to miss.
