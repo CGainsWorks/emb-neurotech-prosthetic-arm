@@ -1,0 +1,153 @@
+{
+  "report": "servo drive current and thermal budget",
+  "source": "hardware/semg-servo-board/analysis/power_model.py",
+  "disclaimer": "Calculated, not measured. No board has been fabricated, nothing has been powered and no instrument has been connected. Every figure is arithmetic from a datasheet parameter and a stated assumption.",
+  "battery": {
+    "cells": 3,
+    "nominal_v": 11.100000000000001,
+    "full_v": 12.600000000000001,
+    "empty_v": 9.899999999999999,
+    "capacity_ah": 2.2
+  },
+  "board": {
+    "size_mm": [
+      80.0,
+      60.0
+    ],
+    "layers": 4,
+    "theta_ja_c_per_w": 30.0,
+    "ambient_c": 25.0,
+    "temperature_limit_c": 85.0
+  },
+  "actuators": [
+    {
+      "joint": "shoulder_rotation",
+      "stall_current_a": 2.5,
+      "rated_torque_nm": 8.0
+    },
+    {
+      "joint": "shoulder_flexion",
+      "stall_current_a": 2.5,
+      "rated_torque_nm": 8.0
+    },
+    {
+      "joint": "elbow_flexion",
+      "stall_current_a": 2.0,
+      "rated_torque_nm": 6.0
+    },
+    {
+      "joint": "forearm_rotation",
+      "stall_current_a": 1.2,
+      "rated_torque_nm": 2.5
+    },
+    {
+      "joint": "wrist_flexion",
+      "stall_current_a": 1.2,
+      "rated_torque_nm": 2.5
+    },
+    {
+      "joint": "tool_roll",
+      "stall_current_a": 0.8,
+      "rated_torque_nm": 1.2
+    }
+  ],
+  "operating_points": [
+    {
+      "name": "all six holding, unloaded",
+      "note": "what the arm draws sitting still",
+      "servo_current_a": 0.612,
+      "battery_current_a": 0.39852950981251517,
+      "dissipation_w": 0.749950278918919,
+      "dissipation_items_w": {
+        "servo rail converter": 0.03685100108108108,
+        "servo rail inductor": 0.00374544,
+        "logic rail converter": 0.01013279783783784,
+        "logic rail inductor": 0.0013483200000000003,
+        "current shunt": 0.00187272,
+        "microcontroller": 0.66,
+        "analogue front end": 0.036000000000000004
+      },
+      "servo_rail_efficiency": 0.9890652157525477,
+      "board_temperature_c": 47.49850836756757,
+      "servo_converter_junction_c": 48.97254841081081,
+      "within_thermal_limit": true,
+      "runtime_minutes": 264.97410455170217,
+      "shunt_headroom": 533.9826562433252
+    },
+    {
+      "name": "a typical reach",
+      "note": "three joints moving under load, from the simulated run in analysis/sim/control_loop_sim.json",
+      "servo_current_a": 2.4,
+      "battery_current_a": 1.3825449266130991,
+      "dissipation_w": 0.9714486854054055,
+      "dissipation_items_w": {
+        "servo rail converter": 0.1775675675675676,
+        "servo rail inductor": 0.0576,
+        "logic rail converter": 0.01013279783783784,
+        "logic rail inductor": 0.0013483200000000003,
+        "current shunt": 0.0288,
+        "microcontroller": 0.66,
+        "analogue front end": 0.036000000000000004
+      },
+      "servo_rail_efficiency": 0.9839313375482823,
+      "board_temperature_c": 54.14346056216216,
+      "servo_converter_junction_c": 61.24616326486487,
+      "within_thermal_limit": true,
+      "runtime_minutes": 76.38088134950846,
+      "shunt_headroom": 34.72222222222222
+    },
+    {
+      "name": "every joint moving at once",
+      "note": "the worst case a trajectory can produce, since the planner synchronises the joints",
+      "servo_current_a": 5.5,
+      "battery_current_a": 3.112778186900413,
+      "dissipation_w": 1.699487874594595,
+      "dissipation_items_w": {
+        "servo rail converter": 0.5382567567567569,
+        "servo rail inductor": 0.3025,
+        "logic rail converter": 0.01013279783783784,
+        "logic rail inductor": 0.0013483200000000003,
+        "current shunt": 0.15125,
+        "microcontroller": 0.66,
+        "analogue front end": 0.036000000000000004
+      },
+      "servo_rail_efficiency": 0.9751554977685629,
+      "board_temperature_c": 75.98463623783785,
+      "servo_converter_junction_c": 97.51490650810813,
+      "within_thermal_limit": true,
+      "runtime_minutes": 33.92467874659341,
+      "shunt_headroom": 6.6115702479338845
+    },
+    {
+      "name": "every joint stalled",
+      "note": "a fault, not an operating point: something is jammed",
+      "servo_current_a": 10.2,
+      "battery_current_a": 5.794501829461894,
+      "dissipation_w": 3.6355703070270273,
+      "dissipation_items_w": {
+        "servo rail converter": 1.3674891891891892,
+        "servo rail inductor": 1.0404,
+        "logic rail converter": 0.01013279783783784,
+        "logic rail inductor": 0.0013483200000000003,
+        "current shunt": 0.5202,
+        "microcontroller": 0.66,
+        "analogue front end": 0.036000000000000004
+      },
+      "servo_rail_efficiency": 0.9621448027928204,
+      "board_temperature_c": 134.06710921081083,
+      "servo_converter_junction_c": 188.76667677837838,
+      "within_thermal_limit": false,
+      "runtime_minutes": 18.224172346116344,
+      "shunt_headroom": 1.9223375624759709
+    }
+  ],
+  "continuous_current_limit_a": 6.421398150800791,
+  "continuous_limit_note": "The largest servo current the board can carry indefinitely inside the 85 C limit. Above it the arm can still move, in bursts, which is what a prosthesis actually does.",
+  "fuse": {
+    "total_stall_a": 10.2,
+    "firmware_trip_a": 8.0,
+    "fuse_a": 15.0,
+    "fuse_type": "slow blow, so a start-up inrush does not open it",
+    "note": "Three protections at three speeds. The firmware trips on current at 8 A, which is above the 5.5 A a synchronised move draws and below the 10.2 A a jam draws, so a jam is caught inside a control period and an ordinary movement is not. It trips on temperature at 85 C, which catches sustained current above the 6.4 A the board can carry indefinitely. The 15 A fuse protects the wiring from a short and nothing else, because a fuse that opens drops a limb and cannot be reset by software."
+  }
+}

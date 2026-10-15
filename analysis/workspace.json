@@ -1,0 +1,28 @@
+{
+  "report": "workspace",
+  "source": "kinematics/tools/workspace_report.cpp",
+  "samples": 200000,
+  "seed": 20260822,
+  "sampling": "uniform over the joint limits, so denser near the centre of the workspace than a uniform Cartesian sample would be",
+  "envelope": {
+    "x_m": [-0.50033450147179526, 0.6532776889080093],
+    "y_m": [-0.65384325243185448, 0.65472109383328503],
+    "z_m": [-0.54485730163583912, 0.76492603405293957],
+    "min_reach_m": 0.0046129286181994678,
+    "max_reach_m": 0.76492627765727983,
+    "kinematic_max_reach_m": 0.7649999999999999
+  },
+  "solved": 200000,
+  "outside_limits": 0,
+  "unreachable": 0,
+  "solved_fraction": 1,
+  "mean_in_limit_branches": 2.93472,
+  "round_trip_error": {
+    "position_median_m": 1.0328526677402942e-16,
+    "position_p99_m": 3.6821932062951477e-16,
+    "position_max_m": 6.6613381477509392e-16,
+    "orientation_median_rad": 4.1261629522333659e-16,
+    "orientation_p99_rad": 3.4167733676517822e-15,
+    "orientation_max_rad": 1.7837598017117039e-11
+  }
+}

@@ -1,0 +1,22 @@
+# Build output, which the image rebuilds anyway and which would otherwise be
+# copied in from whatever host happened to run the build.
+build/
+install/
+log/
+kinematics/build/
+firmware/build/
+firmware/build-arm/
+
+.git/
+.github/
+
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.venv/
+
+# The imported hardware archives. Nothing in the image reads them and they are
+# most of the repository's size.
+hardware/arm-devkit/*.zip
+hardware/semg-servo-board/*.shapr

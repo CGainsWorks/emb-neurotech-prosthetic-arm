@@ -1,0 +1,16 @@
+# The scripted gesture sequence the launch file drives the arm with.
+#
+# Deliberately includes a gesture this mechanism cannot perform (6, a fist) so
+# that the "reported but not acted on" path is exercised rather than only
+# described.
+
+/gesture_replay:
+  ros__parameters:
+    # Ninapro DB5 exercise B class ids. 0 is rest.
+    sequence: [0, 13, 0, 10, 9, 6, 14, 0]
+    hold_s: 2.0
+    confidence: 0.88
+    # One in seven decisions is a confident wrong answer, which is roughly the
+    # classifier's own error rate. The dwell in the mapper is what absorbs them.
+    misclassify_every: 7
+    rate_hz: 20.0

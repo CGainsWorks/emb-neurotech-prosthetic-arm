@@ -1,0 +1,162 @@
+name: CI
+
+# Two jobs and they are sized for an account with a monthly minute budget
+# rather than for a build farm.
+#
+#   host   everything that needs nothing but a compiler and Python: the
+#          kinematics library, the firmware's portable core, the hardware
+#          models and the checks that the generated files and the documented
+#          numbers have not drifted from what generates them. About three
+#          minutes.
+#   ros    the ROS 2 workspace and the end-to-end simulation, in the official
+#          Humble image so that nothing has to apt-install a distribution.
+#          About six minutes.
+#
+# The cross-compiled firmware image is a third workflow, firmware-image.yml,
+# which only runs when firmware/ changes. The ARM toolchain is a 300 MB
+# install and it is not worth paying for it on a commit that touched a
+# document.
+#
+# Nothing here is a matrix. One compiler, one Python, one distribution: this
+# repository targets one board and one ROS distribution and testing
+# combinations it will never run on would cost real minutes to learn nothing.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+# A second push to the same branch cancels the first. Without this a busy
+# afternoon pays for every intermediate commit.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  host:
+    name: kinematics, firmware core, hardware models
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      # cmake, g++ and python3 are already on the runner image, so the only
+      # install is pytest. That is most of why this job is quick.
+      - name: Toolchain
+        run: |
+          cmake --version | head -1
+          g++ --version | head -1
+          python3 --version
+          python3 -m pytest --version >/dev/null 2>&1 || \
+            python3 -m pip install --quiet --disable-pip-version-check pytest
+
+      - name: Kinematics library
+        run: ./kinematics/run_tests.sh
+
+      - name: Firmware, host side
+        run: ./firmware/run_tests.sh
+
+      - name: Hardware models
+        run: python3 -m pytest hardware/semg-servo-board/analysis -q
+
+      - name: The description still matches the model it was generated from
+        # The URDF is generated from kinematics/src/model.cpp. Regenerate both
+        # and fail on any difference, so a link length that reached the C++ and
+        # not the description cannot survive a commit.
+        run: |
+          ./kinematics/build/dump_model > ros2_ws/src/arm_description/config/a1_arm_model.json
+          python3 scripts/generate_urdf.py --check
+
+      - name: The URDF describes the same arm as the model
+        run: python3 -m pytest ros2_ws/src/arm_description/test -q
+
+      - name: The hardware documents still match the models
+        # Same idea for the analogue and power figures: regenerate the JSON the
+        # documents quote from and fail if it moved.
+        run: |
+          python3 hardware/semg-servo-board/analysis/report.py --quiet
+          git diff --exit-code -- hardware/semg-servo-board/analysis
+
+      - name: Every number in the documentation comes from a committed result
+        run: python3 scripts/check_docs.py
+
+      - name: Shell scripts parse
+        run: |
+          for script in scripts/*.sh firmware/*.sh kinematics/*.sh; do
+            bash -n "$script" && echo "ok: $script"
+          done
+
+  ros:
+    name: ROS 2 workspace and the end-to-end simulation
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    # The official image, so the distribution does not have to be installed.
+    # ros-base rather than desktop: nothing here needs RViz or Gazebo and the
+    # desktop image is four times the size to pull.
+    container: ros:humble-ros-base
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install what the image does not already have
+        run: |
+          apt-get update -qq
+          apt-get install -y -qq --no-install-recommends python3-pytest
+
+      - name: Build
+        shell: bash
+        run: ./scripts/build_ros.sh
+
+      - name: Test
+        shell: bash
+        run: |
+          set +u
+          . /opt/ros/humble/setup.bash
+          set -u
+          colcon test --base-paths kinematics firmware ros2_ws/src \
+            --return-code-on-test-failure
+          colcon test-result --verbose
+
+      # The claim the whole repository rests on: a scripted sequence of
+      # classifier decisions goes in one end and the arm moves at the other,
+      # through the real control stack, the real wire protocol and the real
+      # kinematics. It writes JSON and returns non-zero if the pipeline did not
+      # carry a complete run.
+      - name: Acquisition through to actuation
+        shell: bash
+        run: |
+          set +u
+          . install/setup.bash
+          set -u
+          mkdir -p analysis/sim
+          ros2 run arm_bringup sim_demo --output analysis/sim/control_loop_sim.json
+
+      - name: The same run survives a lossy link
+        shell: bash
+        run: |
+          set +u
+          . install/setup.bash
+          set -u
+          ros2 run arm_bringup sim_demo --frame-loss 0.15 \
+            --output /tmp/control_loop_lossy.json
+
+      - name: The committed simulation result is still what the code produces
+        shell: bash
+        # Only the fields that are properties of the design. The host timings
+        # in the same file are a property of whatever machine ran it and are
+        # expected to differ.
+        run: python3 scripts/check_sim_result.py analysis/sim/control_loop_sim.json
+
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: sim-output
+          path: |
+            analysis/sim/
+            /tmp/control_loop_lossy.json
+            log/
+          retention-days: 7
+          if-no-files-found: ignore

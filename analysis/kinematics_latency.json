@@ -1,0 +1,54 @@
+{
+  "report": "kinematics latency",
+  "source": "kinematics/tools/ik_benchmark.cpp",
+  "label": "host",
+  "measured": true,
+  "disclaimer": "Measured on the host that ran it, not on the arm controller. See docs/CONTROL_LOOP_TIMING.md.",
+  "iterations": 20000,
+  "warmup": 2000,
+  "forward_kinematics": {
+    "iterations": 20000,
+    "median_us": 0.63300000000000001,
+    "p99_us": 1.170049999999992,
+    "max_us": 233.58500000000001
+  },
+  "jacobian": {
+    "iterations": 20000,
+    "median_us": 0.63500000000000001,
+    "p99_us": 1.0189999999999999,
+    "max_us": 430.66399999999999
+  },
+  "inverse_kinematics_analytic": {
+    "iterations": 20000,
+    "median_us": 5.3840000000000003,
+    "p99_us": 31.697249999999961,
+    "max_us": 10522.668
+  },
+  "inverse_kinematics_numerical": {
+    "iterations": 20000,
+    "median_us": 70.079499999999996,
+    "p99_us": 3210.2183299999992,
+    "max_us": 13828.630999999999
+  },
+  "inverse_dynamics": {
+    "iterations": 20000,
+    "median_us": 0.94699999999999995,
+    "p99_us": 3.1600399999999937,
+    "max_us": 1576.8579999999999
+  },
+  "forward_dynamics": {
+    "iterations": 20000,
+    "median_us": 5.0620000000000003,
+    "p99_us": 23.937049999999992,
+    "max_us": 3639.6669999999999
+  },
+  "trajectory_plan_and_sample": {
+    "iterations": 20000,
+    "median_us": 0.13100000000000001,
+    "p99_us": 0.68904999999999195,
+    "max_us": 308.37599999999998
+  },
+  "numerical_converged_fraction": 0.75865000000000005,
+  "numerical_mean_iterations": 57.69135,
+  "checksum": 12947.254538729185
+}

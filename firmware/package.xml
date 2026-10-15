@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+  <name>pa_core</name>
+  <version>1.0.0</version>
+  <description>
+    The portable half of the A1 board firmware: signal conditioning, servo
+    limiting, the IMU driver, the wire protocol and the fault supervisor. Plain
+    CMake with no ROS dependency. It is declared as a package so colcon builds
+    and installs it ahead of arm_interface, which links the same protocol
+    implementation the board runs rather than keeping a second copy of it.
+  </description>
+  <maintainer email="114424105+CGainsWorks@users.noreply.github.com">CGainsWorks</maintainer>
+  <license>MIT</license>
+
+  <buildtool_depend>cmake</buildtool_depend>
+
+  <export>
+    <build_type>cmake</build_type>
+  </export>
+</package>

@@ -1,0 +1,18 @@
+# Move the tool to a Cartesian pose in the base frame.
+geometry_msgs/Pose target
+
+# Seconds. Zero asks the planner to choose, from the joint limits.
+float64 duration
+
+# Straight line in space rather than in joint space. Costs an inverse solution
+# per waypoint and is what a reach towards an object wants.
+bool cartesian_path
+---
+bool accepted
+string message
+
+# Filled in whether or not the move was accepted, so a caller can see how close
+# it came.
+float64 planned_duration
+float64 position_error
+float64 orientation_error

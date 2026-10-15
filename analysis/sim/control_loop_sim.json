@@ -1,0 +1,51 @@
+{
+  "report": "end to end simulation",
+  "source": "ros2_ws/src/arm_bringup/src/sim_demo.cpp",
+  "disclaimer": "Simulated. No hardware exists. The arm, the board and the wearer are all models; only the control stack, the wire protocol and the kinematics are the real implementations.",
+  "duration_s": 14,
+  "step_s": 0.001,
+  "frame_loss": 0,
+  "gravity_compensation": true,
+  "classifier": {
+    "decisions": 280,
+    "deliberate_misclassifications": 28,
+    "gestures_accepted": 7
+  },
+  "frames": {
+    "semg": 2800,
+    "telemetry": 1400,
+    "imu": 1400,
+    "dropped_by_the_link": 0,
+    "decode_errors": 0
+  },
+  "simulated_time": {
+    "note": "What the arm does. A property of the design, not of this machine.",
+    "dwell_ms": [150, 0, 150, 150, 150, 150, 0],
+    "settle_from_decision_ms": [1610, 1679, 450, 1520],
+    "median_settle_ms": 1565,
+    "max_settle_ms": 1679,
+    "median_tracking_error_rad": 0.0121896,
+    "p99_tracking_error_rad": 0.0538062,
+    "max_tracking_error_rad": 0.0546728
+  },
+  "host_cost": {
+    "note": "Measured on the machine that ran this, not on the arm's controller. See docs/CONTROL_LOOP_TIMING.md.",
+    "measured": true,
+    "control_iterations": 1400,
+    "control_median_us": 0.599,
+    "control_p99_us": 1.47841,
+    "control_max_us": 64.58,
+    "plan_median_us": 0.459,
+    "plan_max_us": 0.939,
+    "wall_clock_s": 0.0796388,
+    "real_time_factor": 175.794
+  },
+  "actuation": {
+    "peak_torque_nm": [0.156805, 6.27646, 1.94459, 0.395073, 0.571181, 0.0243783],
+    "rated_torque_nm": [8, 8, 6, 2.5, 2.5, 1.2],
+    "torque_saturated_at_any_point": false,
+    "saturation_note": "A position servo reaches its torque limit while accelerating and that is normal. What would not be normal is reaching it while holding, which shows up as a move that never settles.",
+    "final_joint_rad": [5.18191e-11, 0.599973, -1.09717, 0.0102405, 0.305374, -8.12858e-06],
+    "final_tool_position_m": [0.105482, -0.000292482, -0.0423907]
+  }
+}

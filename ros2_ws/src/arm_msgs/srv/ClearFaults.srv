@@ -1,0 +1,7 @@
+# Clear the latched faults. Deliberately a service and not a topic: over-current
+# and over-temperature mean something mechanical is wrong, and clearing them
+# should be somebody deciding, not something happening.
+---
+bool cleared
+uint16 remaining_faults
+string message

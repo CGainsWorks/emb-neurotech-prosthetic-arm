@@ -1,0 +1,26 @@
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+  <name>arm_control</name>
+  <version>1.0.0</version>
+  <description>
+    Gesture to pose mapping with the confidence gating and dwell that make it
+    usable on a limb and the joint control loop that follows the resulting
+    trajectory with gravity compensation. The judgement lives in a library with
+    unit tests; the nodes are wiring.
+  </description>
+  <maintainer email="114424105+CGainsWorks@users.noreply.github.com">CGainsWorks</maintainer>
+  <license>MIT</license>
+
+  <buildtool_depend>ament_cmake</buildtool_depend>
+
+  <depend>rclcpp</depend>
+  <depend>sensor_msgs</depend>
+  <depend>trajectory_msgs</depend>
+  <depend>arm_msgs</depend>
+  <depend>arm_kinematics</depend>
+
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
+</package>

@@ -1,0 +1,20 @@
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+  <name>arm_kinematics</name>
+  <version>1.0.0</version>
+  <description>
+    Forward and inverse kinematics, rigid-body dynamics and trajectory
+    generation for the A1 six-axis prosthetic arm. Plain CMake with no ROS
+    dependency, declared here only so colcon builds and installs it ahead of
+    the packages that consume it.
+  </description>
+  <maintainer email="114424105+CGainsWorks@users.noreply.github.com">CGainsWorks</maintainer>
+  <license>MIT</license>
+
+  <buildtool_depend>cmake</buildtool_depend>
+
+  <export>
+    <build_type>cmake</build_type>
+  </export>
+</package>

@@ -1,0 +1,40 @@
+# Compose reuses an image with a matching tag rather than checking whether the
+# Dockerfile has moved on, so `docker compose run` after a pull will happily
+# exercise the previous checkout. Pass --build, or use the Makefile targets,
+# which build first.
+
+services:
+  # The default: the end-to-end simulation, acquisition through to actuation,
+  # which writes analysis/sim/control_loop_sim.json and checks it.
+  sim:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    image: emb-neurotech-prosthetic-arm:latest
+    command: make sim
+    volumes:
+      - ./analysis:/arm/analysis
+
+  # Every test suite in the repository.
+  test:
+    extends: sim
+    command: make test
+    volumes: []
+
+  # The consistency checks: the description against the model it was generated
+  # from and the documents against the results they quote.
+  check:
+    extends: sim
+    command: make check
+    volumes: []
+
+  # The distributed graph over ROS 2 topics, for RViz. Needs a display, so it
+  # is not what `docker compose up` runs.
+  #
+  #   docker compose run --rm bringup
+  bringup:
+    extends: sim
+    command: ros2 launch arm_bringup sim.launch.py
+    network_mode: host
+    ipc: host
+    volumes: []

@@ -1,0 +1,41 @@
+# Parameters for the control stack. Every value here has a reason attached
+# either in the header it configures or in docs/CONTROL_LOOP_TIMING.md.
+
+/gesture_mapper:
+  ros__parameters:
+    # Below this a decision is ignored. Not 0.5: the classifier is calibrated,
+    # and at 0.5 its false activation rate on Ninapro DB5 is 7.2 percent, which
+    # on an arm is a spurious movement every fifteen seconds.
+    confidence_threshold: 0.6
+    # Three classifier decisions at the 50 ms stride the classifier uses.
+    dwell_s: 0.15
+    # Nothing for half a second means the classifier or the link has gone and
+    # the arm returns to rest rather than holding whatever it was doing.
+    staleness_s: 0.5
+    trajectory_samples: 40
+
+/joint_controller:
+  ros__parameters:
+    rate_hz: 100.0
+    # Radians of servo deflection per newton metre of load. The one number in
+    # the controller that has to come from a measurement and it has not been
+    # measured. firmware/docs/BRING_UP.md has the procedure; set it to 0.0 for
+    # a first power-up.
+    compliance_rad_per_nm: 0.012
+    # Seconds of lead on the trajectory velocity, which cancels the servo's own
+    # following error while it is moving. Also from bring-up: it is the servo's
+    # derivative-to-proportional gain ratio.
+    velocity_lead_s: 0.064
+    max_compensation_rad: 0.25
+    link_timeout_s: 0.25
+
+/firmware_bridge:
+  ros__parameters:
+    backend: sim
+    port: /dev/ttyUSB0
+    baud: 921600
+    service_rate_hz: 1000.0
+    sim:
+      step_s: 0.001
+      frame_loss: 0.0
+      seed: 20260822

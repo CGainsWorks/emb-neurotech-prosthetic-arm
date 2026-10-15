@@ -1,0 +1,67 @@
+name: firmware image
+
+# The cross-compiled STM32H743 image, kept out of the main workflow on purpose.
+#
+# The ARM toolchain is a 300 MB apt install, which is most of a minute every
+# time it runs and the image only changes when the firmware does. Running it
+# on a commit that touched a document would cost real minutes to prove
+# something nothing had altered.
+#
+# The image has never been flashed. What this job establishes is that it
+# compiles, links, fits and is well formed: the vector table is where the
+# core will look for it, the stack pointer is inside RAM, the three interrupt
+# vectors point at the handlers that service them and the DMA buffers are in
+# memory the DMA controllers can actually reach. None of that needs hardware
+# and all of it is the kind of mistake that otherwise costs a day on a bench.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'firmware/**'
+      - '.github/workflows/firmware-image.yml'
+  pull_request:
+    paths:
+      - 'firmware/**'
+      - '.github/workflows/firmware-image.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  image:
+    name: cross-compile and verify
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: ARM toolchain
+        # --no-install-recommends matters here: the recommended set pulls in
+        # the documentation and roughly doubles the download.
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq --no-install-recommends \
+            gcc-arm-none-eabi binutils-arm-none-eabi libnewlib-arm-none-eabi
+          arm-none-eabi-gcc --version | head -1
+
+      - name: Build
+        run: ./firmware/build_firmware.sh
+
+      - name: The image is well formed
+        run: ./firmware/verify_image.sh
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: pa_firmware
+          path: |
+            firmware/build-arm/pa_firmware.elf
+            firmware/build-arm/pa_firmware.bin
+            firmware/build-arm/pa_firmware.hex
+            firmware/build-arm/pa_firmware.map
+          retention-days: 14

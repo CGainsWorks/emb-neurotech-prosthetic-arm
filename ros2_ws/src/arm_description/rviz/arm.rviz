@@ -1,0 +1,34 @@
+# Minimal RViz configuration: the arm and its frames, nothing else.
+# Kept small on purpose. A full RViz config is mostly panel geometry, which is
+# noise in a diff and stale the first time anybody resizes a window.
+Panels:
+  - Class: rviz_common/Displays
+    Name: Displays
+Visualization Manager:
+  Global Options:
+    Fixed Frame: base_link
+    Background Color: 48; 48; 48
+  Displays:
+    - Class: rviz_default_plugins/Grid
+      Name: Grid
+      Enabled: true
+    - Class: rviz_default_plugins/RobotModel
+      Name: RobotModel
+      Enabled: true
+      Description Topic:
+        Value: /robot_description
+    - Class: rviz_default_plugins/TF
+      Name: TF
+      Enabled: true
+      Show Axes: true
+      Show Names: true
+  Views:
+    Current:
+      Class: rviz_default_plugins/Orbit
+      Distance: 1.6
+      Focal Point:
+        X: 0.15
+        Y: 0
+        Z: -0.1
+      Pitch: 0.35
+      Yaw: 0.9
