@@ -45,6 +45,32 @@ from power_model import (  # noqa: E402
     temperatures,
 )
 
+def reproducible(value, digits: int = 9):
+    """Round every float in a structure to `digits` significant figures.
+
+    The committed JSON is compared against a fresh run in CI, so it has to come
+    out byte for byte the same on a different machine. Full double precision
+    does not: these figures are sums and quotients whose last digit depends on
+    the order the compiler chose and on whose libm computed the logarithm, and
+    a board temperature that reads 75.98463623783785 here and
+    75.98463623783783 on a runner fails the check for no reason anybody can
+    act on.
+
+    Nine significant figures is far more than any of these numbers deserve,
+    given that the most confident of them rests on a datasheet typical.
+    """
+    if isinstance(value, dict):
+        return {key: reproducible(item, digits) for key, item in value.items()}
+    if isinstance(value, list):
+        return [reproducible(item, digits) for item in value]
+    if isinstance(value, bool) or not isinstance(value, float):
+        return value
+    if value == 0.0 or not math.isfinite(value):
+        return value
+    exponent = math.floor(math.log10(abs(value)))
+    return round(value, digits - 1 - exponent)
+
+
 DISCLAIMER = (
     "Calculated, not measured. No board has been fabricated, nothing has been "
     "powered and no instrument has been connected. Every figure is arithmetic "
@@ -352,7 +378,7 @@ def main() -> int:
     for name, payload in (("afe_noise.json", afe), ("power_thermal.json", power)):
         path = args.output_dir / name
         with open(path, "w", encoding="utf-8", newline="\n") as handle:
-            json.dump(payload, handle, indent=2)
+            json.dump(reproducible(payload), handle, indent=2)
             handle.write("\n")
 
     write_svg_response(components, args.output_dir / "afe_response.svg")

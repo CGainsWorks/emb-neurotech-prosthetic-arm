@@ -3,253 +3,253 @@
   "source": "hardware/semg-servo-board/analysis/afe_model.py",
   "disclaimer": "Calculated, not measured. No board has been fabricated, nothing has been powered and no instrument has been connected. Every figure is arithmetic from a datasheet parameter and a stated assumption.",
   "components": {
-    "stage1_gain": 10.090909090909092,
-    "stage2_gain": 30.303030303030305,
-    "total_gain": 305.7851239669422,
-    "highpass_hz": 4.822877063390767,
-    "lowpass_hz": 476.8988477462265,
-    "lowpass_q": 0.7416198487095664,
-    "input_rc_hz": 79577.47154594767,
-    "full_scale_uv": 4905.405405405404,
-    "uv_per_count": 0.14970566134847269,
+    "stage1_gain": 10.0909091,
+    "stage2_gain": 30.3030303,
+    "total_gain": 305.785124,
+    "highpass_hz": 4.82287706,
+    "lowpass_hz": 476.898848,
+    "lowpass_q": 0.741619849,
+    "input_rc_hz": 79577.4715,
+    "full_scale_uv": 4905.40541,
+    "uv_per_count": 0.149705661,
     "adc_bits": 16,
     "adc_noise_lsb_rms": 4.0
   },
   "bandwidth": {
     "amplifier": "INA333",
     "gain_bandwidth_hz": 350000.0,
-    "stage1_gain": 10.090909090909092,
-    "stage1_bandwidth_hz": 34684.68468468468,
+    "stage1_gain": 10.0909091,
+    "stage1_bandwidth_hz": 34684.6847,
     "signal_band_top_hz": 450.0,
-    "margin": 77.07707707707708,
-    "if_all_gain_were_in_stage_one_hz": 1144.5945945945944
+    "margin": 77.0770771,
+    "if_all_gain_were_in_stage_one_hz": 1144.59459
   },
   "response": [
     {
       "hz": 1.0,
-      "gain": 62.082592969575515,
-      "db_relative_to_passband": -13.848930123648335
+      "gain": 62.082593,
+      "db_relative_to_passband": -13.8489301
     },
     {
       "hz": 2.0,
-      "gain": 117.13400085497847,
-      "db_relative_to_passband": -8.33466752704828
+      "gain": 117.134001,
+      "db_relative_to_passband": -8.33466753
     },
     {
       "hz": 5.0,
-      "gain": 220.08801403011472,
-      "db_relative_to_passband": -2.856399243691576
+      "gain": 220.088014,
+      "db_relative_to_passband": -2.85639924
     },
     {
       "hz": 10.0,
-      "gain": 275.4370350135517,
-      "db_relative_to_passband": -0.9078803812371471
+      "gain": 275.437035,
+      "db_relative_to_passband": -0.907880381
     },
     {
       "hz": 20.0,
-      "gain": 297.31130689034285,
-      "db_relative_to_passband": -0.24409855611850234
+      "gain": 297.311307,
+      "db_relative_to_passband": -0.244098556
     },
     {
       "hz": 50.0,
-      "gain": 304.6585657830807,
-      "db_relative_to_passband": -0.032059209813754944
+      "gain": 304.658566,
+      "db_relative_to_passband": -0.0320592098
     },
     {
       "hz": 100.0,
-      "gain": 306.35972112503373,
-      "db_relative_to_passband": 0.016306235386433082
+      "gain": 306.359721,
+      "db_relative_to_passband": 0.0163062354
     },
     {
       "hz": 200.0,
-      "gain": 305.85514499472583,
-      "db_relative_to_passband": 0.001988734075217621
+      "gain": 305.855145,
+      "db_relative_to_passband": 0.00198873408
     },
     {
       "hz": 450.0,
-      "gain": 239.42720910409938,
-      "db_relative_to_passband": -2.1248570113892598
+      "gain": 239.427209,
+      "db_relative_to_passband": -2.12485701
     },
     {
       "hz": 500.0,
-      "gain": 215.7535982674672,
-      "db_relative_to_passband": -3.0291661256507356
+      "gain": 215.753598,
+      "db_relative_to_passband": -3.02916613
     },
     {
       "hz": 1000.0,
-      "gain": 69.1812558295255,
-      "db_relative_to_passband": -12.908558247294623
+      "gain": 69.1812558,
+      "db_relative_to_passband": -12.9085582
     },
     {
       "hz": 2000.0,
-      "gain": 17.442906955715312,
-      "db_relative_to_passband": -24.87594979149588
+      "gain": 17.442907,
+      "db_relative_to_passband": -24.8759498
     }
   ],
   "noise": {
     "gelled Ag/AgCl, prepared skin": {
       "electrode_impedance_ohms": 10000.0,
-      "noise_bandwidth_hz": 548.0070341317363,
-      "total_uv_rms": 0.9177267225302675,
+      "noise_bandwidth_hz": 548.007034,
+      "total_uv_rms": 0.917726723,
       "dominant_source": "INA333 voltage noise",
       "terms": [
         {
           "source": "INA333 voltage noise",
-          "uv_rms": 0.6096638824585217,
-          "share_of_power": 0.4413205790643481,
+          "uv_rms": 0.609663882,
+          "share_of_power": 0.441320579,
           "note": "25 nV/rtHz with a 10 Hz corner"
         },
         {
           "source": "converter",
-          "uv_rms": 0.5988226453938907,
-          "share_of_power": 0.4257647236109066,
+          "uv_rms": 0.598822645,
+          "share_of_power": 0.425764724,
           "note": "4 LSB RMS at 0.150 uV per count"
         },
         {
           "source": "electrode-skin thermal noise",
-          "uv_rms": 0.3013181767501485,
-          "share_of_power": 0.1078012771982546,
+          "uv_rms": 0.301318177,
+          "share_of_power": 0.107801277,
           "note": "10 kohm at 300 K"
         },
         {
           "source": "input series resistors",
-          "uv_rms": 0.13475358521392572,
-          "share_of_power": 0.021560255439650913,
+          "uv_rms": 0.134753585,
+          "share_of_power": 0.0215602554,
           "note": "2 x 1.0 kohm"
         },
         {
           "source": "INA333 current noise through the electrodes",
-          "uv_rms": 0.03185871130483376,
-          "share_of_power": 0.0012051182224915348,
+          "uv_rms": 0.0318587113,
+          "share_of_power": 0.00120511822,
           "note": "100 fA/rtHz into 10 kohm"
         },
         {
           "source": "TLV9062 second stage",
-          "uv_rms": 0.0315716958876731,
-          "share_of_power": 0.0011835021907432494,
+          "uv_rms": 0.0315716959,
+          "share_of_power": 0.00118350219,
           "note": "divided by the 10.1 in front of it"
         },
         {
           "source": "gain-setting resistor",
-          "uv_rms": 0.031317809628744024,
-          "share_of_power": 0.0011645442736050388,
+          "uv_rms": 0.0313178096,
+          "share_of_power": 0.00116454427,
           "note": "11.0 kohm, divided by the stage gain"
         }
       ],
       "signal_to_noise_db": {
-        "light contraction": 26.76633235822797,
-        "moderate contraction": 46.76633235822797,
-        "strong contraction": 60.74573244494835
+        "light contraction": 26.7663324,
+        "moderate contraction": 46.7663324,
+        "strong contraction": 60.7457324
       }
     },
     "gelled Ag/AgCl, unprepared skin": {
       "electrode_impedance_ohms": 50000.0,
-      "noise_bandwidth_hz": 548.0070341317363,
-      "total_uv_rms": 1.108942005458534,
+      "noise_bandwidth_hz": 548.007034,
+      "total_uv_rms": 1.10894201,
       "dominant_source": "electrode-skin thermal noise",
       "terms": [
         {
           "source": "electrode-skin thermal noise",
-          "uv_rms": 0.6737679260696287,
-          "share_of_power": 0.36915010593341824,
+          "uv_rms": 0.673767926,
+          "share_of_power": 0.369150106,
           "note": "50 kohm at 300 K"
         },
         {
           "source": "INA333 voltage noise",
-          "uv_rms": 0.6096638824585217,
-          "share_of_power": 0.3022478819292492,
+          "uv_rms": 0.609663882,
+          "share_of_power": 0.302247882,
           "note": "25 nV/rtHz with a 10 Hz corner"
         },
         {
           "source": "converter",
-          "uv_rms": 0.5988226453938907,
-          "share_of_power": 0.2915941200485581,
+          "uv_rms": 0.598822645,
+          "share_of_power": 0.29159412,
           "note": "4 LSB RMS at 0.150 uV per count"
         },
         {
           "source": "INA333 current noise through the electrodes",
-          "uv_rms": 0.15929355652416882,
-          "share_of_power": 0.02063377777412111,
+          "uv_rms": 0.159293557,
+          "share_of_power": 0.0206337778,
           "note": "100 fA/rtHz into 50 kohm"
         },
         {
           "source": "input series resistors",
-          "uv_rms": 0.13475358521392572,
-          "share_of_power": 0.014766004237336726,
+          "uv_rms": 0.134753585,
+          "share_of_power": 0.0147660042,
           "note": "2 x 1.0 kohm"
         },
         {
           "source": "TLV9062 second stage",
-          "uv_rms": 0.0315716958876731,
-          "share_of_power": 0.000810546907123985,
+          "uv_rms": 0.0315716959,
+          "share_of_power": 0.000810546907,
           "note": "divided by the 10.1 in front of it"
         },
         {
           "source": "gain-setting resistor",
-          "uv_rms": 0.031317809628744024,
-          "share_of_power": 0.0007975631701929707,
+          "uv_rms": 0.0313178096,
+          "share_of_power": 0.00079756317,
           "note": "11.0 kohm, divided by the stage gain"
         }
       ],
       "signal_to_noise_db": {
-        "light contraction": 25.12242322596684,
-        "moderate contraction": 45.12242322596684,
-        "strong contraction": 59.101823312687216
+        "light contraction": 25.1224232,
+        "moderate contraction": 45.1224232,
+        "strong contraction": 59.1018233
       }
     },
     "dry electrode": {
       "electrode_impedance_ohms": 200000.0,
-      "noise_bandwidth_hz": 548.0070341317363,
-      "total_uv_rms": 1.7240239509132926,
+      "noise_bandwidth_hz": 548.007034,
+      "total_uv_rms": 1.72402395,
       "dominant_source": "electrode-skin thermal noise",
       "terms": [
         {
           "source": "electrode-skin thermal noise",
-          "uv_rms": 1.3475358521392573,
-          "share_of_power": 0.6109336795221693,
+          "uv_rms": 1.34753585,
+          "share_of_power": 0.61093368,
           "note": "200 kohm at 300 K"
         },
         {
           "source": "INA333 current noise through the electrodes",
-          "uv_rms": 0.6371742260966753,
-          "share_of_power": 0.13659342988524267,
+          "uv_rms": 0.637174226,
+          "share_of_power": 0.13659343,
           "note": "100 fA/rtHz into 200 kohm"
         },
         {
           "source": "INA333 voltage noise",
-          "uv_rms": 0.6096638824585217,
-          "share_of_power": 0.12505306626413604,
+          "uv_rms": 0.609663882,
+          "share_of_power": 0.125053066,
           "note": "25 nV/rtHz with a 10 Hz corner"
         },
         {
           "source": "converter",
-          "uv_rms": 0.5988226453938907,
-          "share_of_power": 0.12064514260252295,
+          "uv_rms": 0.598822645,
+          "share_of_power": 0.120645143,
           "note": "4 LSB RMS at 0.150 uV per count"
         },
         {
           "source": "input series resistors",
-          "uv_rms": 0.13475358521392572,
-          "share_of_power": 0.006109336795221691,
+          "uv_rms": 0.134753585,
+          "share_of_power": 0.0061093368,
           "note": "2 x 1.0 kohm"
         },
         {
           "source": "TLV9062 second stage",
-          "uv_rms": 0.0315716958876731,
-          "share_of_power": 0.0003353584330840509,
+          "uv_rms": 0.0315716959,
+          "share_of_power": 0.000335358433,
           "note": "divided by the 10.1 in front of it"
         },
         {
           "source": "gain-setting resistor",
-          "uv_rms": 0.031317809628744024,
-          "share_of_power": 0.0003299864976235724,
+          "uv_rms": 0.0313178096,
+          "share_of_power": 0.000329986498,
           "note": "11.0 kohm, divided by the stage gain"
         }
       ],
       "signal_to_noise_db": {
-        "light contraction": 21.28973401439639,
-        "moderate contraction": 41.28973401439639,
-        "strong contraction": 55.26913410111676
+        "light contraction": 21.289734,
+        "moderate contraction": 41.289734,
+        "strong contraction": 55.2691341
       }
     }
   },
@@ -260,12 +260,12 @@
       "common_mode_input_ohms": 1000000000.0,
       "resistor_tolerance": 0.001,
       "limits_db": {
-        "electrode imbalance": 113.97940008672037,
-        "series resistor tolerance": 173.97940008672037,
+        "electrode imbalance": 113.9794,
+        "series resistor tolerance": 173.9794,
         "amplifier specification": 100.0
       },
       "binding_limit": "amplifier specification",
-      "combined_db": 99.82966643997585,
+      "combined_db": 99.8296664,
       "amplifier_cmrr_db": 100.0,
       "note": "The driven right leg is fitted regardless of which limit binds. It reduces the common-mode voltage on the body rather than rejecting it afterwards, which is the only thing that helps when the interference is larger than the input range."
     },
@@ -276,11 +276,11 @@
       "resistor_tolerance": 0.001,
       "limits_db": {
         "electrode imbalance": 100.0,
-        "series resistor tolerance": 173.97940008672037,
+        "series resistor tolerance": 173.9794,
         "amplifier specification": 100.0
       },
       "binding_limit": "electrode imbalance",
-      "combined_db": 96.9896999565013,
+      "combined_db": 96.9897,
       "amplifier_cmrr_db": 100.0,
       "note": "The driven right leg is fitted regardless of which limit binds. It reduces the common-mode voltage on the body rather than rejecting it afterwards, which is the only thing that helps when the interference is larger than the input range."
     },
@@ -290,12 +290,12 @@
       "common_mode_input_ohms": 1000000000.0,
       "resistor_tolerance": 0.001,
       "limits_db": {
-        "electrode imbalance": 87.95880017344075,
-        "series resistor tolerance": 173.97940008672037,
+        "electrode imbalance": 87.9588002,
+        "series resistor tolerance": 173.9794,
         "amplifier specification": 100.0
       },
       "binding_limit": "electrode imbalance",
-      "combined_db": 87.69551077599857,
+      "combined_db": 87.6955108,
       "amplifier_cmrr_db": 100.0,
       "note": "The driven right leg is fitted regardless of which limit binds. It reduces the common-mode voltage on the body rather than rejecting it afterwards, which is the only thing that helps when the interference is larger than the input range."
     }
@@ -306,22 +306,22 @@
     "common_mode_input_ohms": 1000000000.0,
     "resistor_tolerance": 0.001,
     "limits_db": {
-      "electrode imbalance": 87.95880017344075,
-      "series resistor tolerance": 173.97940008672037,
+      "electrode imbalance": 87.9588002,
+      "series resistor tolerance": 173.9794,
       "amplifier specification": 100.0
     },
     "binding_limit": "electrode imbalance",
-    "combined_db": 87.69551077599857,
+    "combined_db": 87.6955108,
     "amplifier_cmrr_db": 100.0,
     "note": "The driven right leg is fitted regardless of which limit binds. It reduces the common-mode voltage on the body rather than rejecting it afterwards, which is the only thing that helps when the interference is larger than the input range."
   },
   "mains": {
     "body_common_mode_v": 1.0,
     "driven_right_leg_gain": 45.0,
-    "after_drl_mv": 21.73913043478261,
-    "after_cmrr_uv": 0.8963273109713851,
-    "after_digital_notch_uv": 0.017884081054585967,
-    "cmrr_db": 87.69551077599857,
+    "after_drl_mv": 21.7391304,
+    "after_cmrr_uv": 0.896327311,
+    "after_digital_notch_uv": 0.0178840811,
+    "cmrr_db": 87.6955108,
     "digital_notch_db": 34.0
   }
 }

@@ -19,7 +19,11 @@ if [ "${1:-}" = "clean" ]; then
   shift || true
 fi
 
-if [ -z "${ROS_DISTRO:-}" ]; then
+# AMENT_PREFIX_PATH rather than ROS_DISTRO. The official ros images set
+# ROS_DISTRO as a plain environment variable without having sourced anything,
+# so testing that one skips the sourcing and every package then fails to find
+# ament_cmake.
+if [ -z "${AMENT_PREFIX_PATH:-}" ]; then
   for candidate in /opt/ros/*/setup.bash; do
     if [ -f "$candidate" ]; then
       # ROS setup scripts read variables they have not set, so nounset has to
@@ -33,7 +37,7 @@ if [ -z "${ROS_DISTRO:-}" ]; then
   done
 fi
 
-if [ -z "${ROS_DISTRO:-}" ]; then
+if [ -z "${AMENT_PREFIX_PATH:-}" ]; then
   echo "no ROS 2 installation found; source one first, or use docker compose" >&2
   exit 1
 fi

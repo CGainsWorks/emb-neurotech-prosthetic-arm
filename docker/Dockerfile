@@ -15,7 +15,7 @@ RUN apt-get update -qq && apt-get install -y -qq --no-install-recommends \
       cmake \
       gcc-arm-none-eabi \
       binutils-arm-none-eabi \
-      libnewlib-arm-none-eabi \
+      libnewlib-arm-none-eabi \n      libstdc++-arm-none-eabi-newlib \
       python3-pytest \
       make \
     && rm -rf /var/lib/apt/lists/*
