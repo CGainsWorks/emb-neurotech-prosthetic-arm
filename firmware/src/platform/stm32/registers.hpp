@@ -6,7 +6,9 @@
 // them out makes every register access something a reader can check against
 // the reference manual (RM0433) rather than something hidden behind a name.
 //
-// None of this has ever been executed. No board exists.
+// None of this has run on silicon; no board exists. It runs under Renode on
+// an emulated STM32H743, which checks the register sequences against
+// Renode's peripheral models rather than against the part itself.
 #pragma once
 
 #include <cstdint>

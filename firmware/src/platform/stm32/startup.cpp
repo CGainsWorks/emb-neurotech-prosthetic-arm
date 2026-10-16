@@ -2,10 +2,12 @@
 //
 // Replaces the vendor startup assembly. Everything it does is in C++ and
 // visible: copy the initialised data out of flash, zero the rest, turn on the
-// floating point unit and call main. -nostartfiles in the link means nothing
-// else runs first.
+// floating point unit, run the static constructors and call main.
+// -nostartfiles in the link means nothing else runs first.
 //
-// This has never executed. No board exists.
+// It has never executed on silicon. It does run under Renode, on an emulated
+// STM32H743 (see firmware/README.md), which is how the missing constructor
+// call below was found.
 #include <array>
 #include <cstdint>
 
@@ -16,6 +18,12 @@ extern "C" {
 // Provided by the linker script.
 extern uint32_t _sidata, _sdata, _edata, _sbss, _ebss;
 extern uint32_t _sdma, _edma;
+
+// The static constructors, also placed by the linker script. -nostartfiles
+// removes the C runtime that would normally walk these.
+using Constructor = void (*)();
+extern Constructor __preinit_array_start[], __preinit_array_end[];
+extern Constructor __init_array_start[], __init_array_end[];
 
 // The initial stack pointer, declared as a function so that its address is a
 // constant expression and the vector table can be built at compile time. It is
@@ -124,6 +132,19 @@ void Reset_Handler() {
     // in: the DMA controller has no path to DTCM and a buffer the hardware
     // cannot reach fails silently rather than loudly.
     for (uint32_t* destination = &_sdma; destination < &_edma;) *destination++ = 0;
+
+    // Static constructors, after the data they write to exists and before
+    // anything uses the objects they build. Every global in main.cpp with a
+    // virtual function or a non-constant initialiser is built here: without
+    // this loop the I2C bus object has no vtable and the first call through it,
+    // the IMU's WHO_AM_I read, jumps to address zero. The first boot under
+    // Renode stopped exactly there with an INVSTATE usage fault.
+    for (Constructor* constructor = __preinit_array_start; constructor < __preinit_array_end;
+         ++constructor)
+        (*constructor)();
+    for (Constructor* constructor = __init_array_start; constructor < __init_array_end;
+         ++constructor)
+        (*constructor)();
 
     app_main();
 
