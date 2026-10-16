@@ -1,0 +1,270 @@
+// The A1 sEMG and servo board, for Renode 1.17.0.
+//
+// Adapted from Renode's platforms/cpus/stm32h7.repl (Antmicro, MIT licence):
+// the core, memories, clock controller and the peripherals this firmware
+// uses, kept as Renode describes them, plus what is on this board. Only a
+// subset of the STM32H7 is declared because the stock DMA1 has to be replaced
+// and Renode does not allow a declaration to be overridden with a different
+// type. Anything the firmware touches that is not declared here shows up in
+// the log as an access to unmapped memory, which the tests treat as a failure.
+//
+// Loaded by a1_board.resc, which compiles the four models under peripherals/
+// first. Nothing here is a measurement of a board. No board exists.
+
+// --- core -----------------------------------------------------------------
+cpu: CPU.CortexM @ sysbus
+    cpuType: "cortex-m7"
+    numberOfMPURegions: 16
+    nvic: nvic
+
+// firmware/src/platform/stm32/system.hpp: 400 MHz core, 200 MHz AHB, 100 MHz
+// APB and 200 MHz on the timers. Renode's models take a fixed frequency each
+// rather than deriving one from the RCC, so the values the firmware programs
+// are written down here once and the tests check that the firmware agrees.
+nvic: IRQControllers.NVIC @ sysbus 0xE000E000
+    priorityMask: 0xF0
+    systickFrequency: 400000000
+    -> cpu@0
+
+dwt: Miscellaneous.DWT @ sysbus 0xE0001000
+    frequency: 400000000
+
+// --- memory (RM0433 section 2.3) --------------------------------------------
+itcm: Memory.MappedMemory @ sysbus 0x00000000
+    size: 0x10000
+
+flashBank1: Memory.MappedMemory @ sysbus 0x08000000
+    size: 0x100000
+
+flashBank2: Memory.MappedMemory @ sysbus 0x08100000
+    size: 0x100000
+
+dtcm: Memory.MappedMemory @ sysbus 0x20000000
+    size: 0x20000
+
+axiSram: Memory.MappedMemory @ sysbus 0x24000000
+    size: 0x80000
+
+sram1: Memory.MappedMemory @ sysbus 0x30000000
+    size: 0x20000
+
+sram2: Memory.MappedMemory @ sysbus 0x30020000
+    size: 0x20000
+
+sram4: Memory.MappedMemory @ sysbus 0x38000000
+    size: 0x10000
+
+// --- reset, clocks, power and flash -----------------------------------------
+rcc: Miscellaneous.STM32H7_RCC @ sysbus 0x58024400
+    systick: nvic
+
+flashController: MTD.STM32H7_FlashController @ sysbus 0x52002000
+    flash1: flashBank1
+    flash2: flashBank2
+    -> nvic@4
+
+pwr: Python.PythonPeripheral @ sysbus 0x58024800
+    size: 0x400
+    initable: false
+    script: '''
+if request.Offset == 0x00: # CR1
+    request.Value = 0xF000C100
+elif request.Offset == 0x04: # CSR1, ACTVOSRDY
+    request.Value = 0x6000
+elif request.Offset == 0x0C: # CR3, USB33RDY
+    request.Value = 0x4000000
+elif request.Offset == 0x18: # D3CR, VOSRDY
+    request.Value = 0x2000
+else:
+    self.WarningLog("Unhandled access to offset 0x{0:X}", request.Offset)
+'''
+
+// --- GPIO -------------------------------------------------------------------
+gpioPortA: GPIOPort.STM32_GPIOPort @ {
+        sysbus <0x58020000, +0x400>;
+        rcc RegistrationPeripheralAlias.GPIOA
+    }
+    numberOfAFs: 16
+
+gpioPortB: GPIOPort.STM32_GPIOPort @ {
+        sysbus <0x58020400, +0x400>;
+        rcc RegistrationPeripheralAlias.GPIOB
+    }
+    numberOfAFs: 16
+
+gpioPortC: GPIOPort.STM32_GPIOPort @ {
+        sysbus <0x58020800, +0x400>;
+        rcc RegistrationPeripheralAlias.GPIOC
+    }
+    numberOfAFs: 16
+
+gpioPortD: GPIOPort.STM32_GPIOPort @ {
+        sysbus <0x58020C00, +0x400>;
+        rcc RegistrationPeripheralAlias.GPIOD
+    }
+    numberOfAFs: 16
+
+gpioPortE: GPIOPort.STM32_GPIOPort @ {
+        sysbus <0x58021000, +0x400>;
+        rcc RegistrationPeripheralAlias.GPIOE
+    }
+    numberOfAFs: 16
+
+// --- host link: USART1 on PA9 and PA10 ---------------------------------------
+usart1: UART.STM32F7_USART @ {
+        sysbus 0x40011000;
+        rcc RegistrationPeripheralAlias.USART1
+    }
+    frequency: 100000000
+    IRQ -> nvic@37
+
+// --- DMA --------------------------------------------------------------------
+// peripherals/STM32H7_DMA.cs rather than Renode's STM32DMA: it adds circular
+// mode, the half transfer interrupt and the stream releasing itself on
+// completion. Memory to peripheral streams are paced at 921600 baud, 8N1,
+// which is the only one this firmware runs: USART1 transmit.
+dma1: DMA.STM32H7_DMA @ {
+        sysbus 0x40020000;
+        rcc RegistrationPeripheralAlias.DMA1
+    }
+    memoryToPeripheralBytesPerSecond: 92160
+    [0-7] -> nvic@[11-17, 47]
+
+dmamux1: Miscellaneous.STM32_DMAMUX @ sysbus 0x40020800
+    numberOfInputRequestChannels: 115
+    numberOfOutputRequestChannels: 16
+    numberOfRequestGeneratorChannels: 8
+    [0-7] -> dma1@[0-7]
+
+// --- sEMG acquisition: ADC1 ---------------------------------------------------
+// Renode's STM32H7 ADC stands in for the TIM2 TRGO trigger with a fixed
+// conversion rate, so the rate is set to the 2 kHz in pa/config/board.hpp and
+// the test checks that the firmware programmed TIM2 for the same rate. The
+// reference is the board's 3.0 V, not the Nucleo's 3.3 V.
+adc1: Analog.STM32H7_ADC @ {
+        sysbus 0x40022000;
+        rcc RegistrationPeripheralAlias.ADC12
+    }
+    referenceVoltage: 3.0
+    externalEventFrequency: 2000
+    dmaPeripheral: dmamux1
+    dmaChannel: 9
+    -> nvic@18
+
+// The eight electrode inputs, ADC1 channels 3, 7, 10, 11, 14, 15, 16 and 18
+// (firmware/docs/PINOUT.md), each replaying one column of the stimulus file.
+// The stimulus is on the bus only so the monitor can name it; see the model.
+semg: Analog.SemgStimulus @ sysbus <0x60000010, +0x10>
+    sampleRateHz: 2000
+    restVolts: 1.5
+
+semgCh3: Analog.SemgStimulusChannel @ adc1 3
+    stimulus: semg
+    column: 0
+
+semgCh7: Analog.SemgStimulusChannel @ adc1 7
+    stimulus: semg
+    column: 1
+
+semgCh10: Analog.SemgStimulusChannel @ adc1 10
+    stimulus: semg
+    column: 2
+
+semgCh11: Analog.SemgStimulusChannel @ adc1 11
+    stimulus: semg
+    column: 3
+
+semgCh14: Analog.SemgStimulusChannel @ adc1 14
+    stimulus: semg
+    column: 4
+
+semgCh15: Analog.SemgStimulusChannel @ adc1 15
+    stimulus: semg
+    column: 5
+
+semgCh16: Analog.SemgStimulusChannel @ adc1 16
+    stimulus: semg
+    column: 6
+
+semgCh18: Analog.SemgStimulusChannel @ adc1 18
+    stimulus: semg
+    column: 7
+
+// --- timers -----------------------------------------------------------------
+// TIM2 is the acquisition trigger; TIM1 and TIM3 are the six servo channels.
+timer1: Timers.STM32_Timer @ {
+        sysbus 0x40010000;
+        rcc RegistrationPeripheralAlias.TIM1
+    }
+    initialLimit: 0xffff
+    frequency: 200000000
+    BreakInterrupt -> nvic@24
+    UpdateInterrupt -> nvic@25
+    [TriggerInterrupt, CommutationInterrupt] -> nvic@[26, 26]
+    CaptureCompareInterrupt -> nvic@27
+
+timer2: Timers.STM32_Timer @ {
+        sysbus 0x40000000;
+        rcc RegistrationPeripheralAlias.TIM2
+    }
+    initialLimit: 0xffffffff
+    frequency: 200000000
+    -> nvic@28
+
+timer3: Timers.STM32_Timer @ {
+        sysbus 0x40000400;
+        rcc RegistrationPeripheralAlias.TIM3
+    }
+    initialLimit: 0xffff
+    frequency: 200000000
+    -> nvic@29
+
+// Timer outputs to the pins the firmware routes them to, with the alternate
+// function each needs: TIM1 channels 1 to 4 on PE9, PE11, PE13 and PE14 (AF1),
+// TIM3 channels 1 and 2 on PB4 and PB5 (AF2). A pin left in the wrong mode
+// produces no waveform, which the duty cycle tests would catch.
+timer1:
+    0 -> gpioPortE#09@01
+    1 -> gpioPortE#11@01
+    2 -> gpioPortE#13@01
+    3 -> gpioPortE#14@01
+
+timer3:
+    0 -> gpioPortB#04@02
+    1 -> gpioPortB#05@02
+
+// --- servo outputs ----------------------------------------------------------
+// Each PWM pin drives an LED model, so the Robot tests can measure the duty
+// cycle the timer actually produces on the pin.
+servo0: Miscellaneous.LED @ gpioPortE 9
+servo1: Miscellaneous.LED @ gpioPortE 11
+servo2: Miscellaneous.LED @ gpioPortE 13
+servo3: Miscellaneous.LED @ gpioPortE 14
+servo4: Miscellaneous.LED @ gpioPortB 4
+servo5: Miscellaneous.LED @ gpioPortB 5
+
+gpioPortE:
+    9 -> servo0@0
+    11 -> servo1@0
+    13 -> servo2@0
+    14 -> servo3@0
+
+gpioPortB:
+    4 -> servo4@0
+    5 -> servo5@0
+
+// --- IMU: LSM6DSOX on I2C1, PB6 and PB7, SDO tied low --------------------------
+i2c1: I2C.STM32F7_I2C @ {
+        sysbus 0x40005400;
+        rcc RegistrationPeripheralAlias.I2C1
+    }
+    EventInterrupt -> nvic@31
+    ErrorInterrupt -> nvic@32
+
+imu: Sensors.LSM6DSOX @ i2c1 0x6A
+
+// --- the host ---------------------------------------------------------------
+// Plays timed command frames into USART1's receiver. On the bus only so the
+// monitor can name it; see the model.
+hostLink: Miscellaneous.HostLinkReplay @ sysbus <0x60000000, +0x10>
+    uart: usart1

@@ -1,0 +1,37 @@
+:name: A1 arm board
+:description: The STM32H743 firmware image on an emulated STM32H743 with simulated sEMG, IMU, servos and host.
+
+# Set these before including this script to override them.
+$name?="a1-arm"
+$elf?=$ORIGIN/../build-arm/pa_firmware.elf
+
+# The board models that Renode does not ship, compiled on load.
+include $ORIGIN/peripherals/STM32H7_DMA.cs
+include $ORIGIN/peripherals/LSM6DSOX.cs
+include $ORIGIN/peripherals/SemgStimulus.cs
+include $ORIGIN/peripherals/HostLinkReplay.cs
+
+mach create $name
+machine LoadPlatformDescription $ORIGIN/a1_board.repl
+
+# 400 million instructions a second of virtual time, the configured core
+# clock, rather than Renode's default of 100. This is a rate for the emulator
+# to keep, not a claim about how fast the firmware runs on silicon: Renode does
+# not model the Cortex-M7's pipeline, caches or wait states.
+cpu PerformanceInMips 400
+
+# Ten microseconds between synchronisation points. The ADC model starts each
+# conversion in a sequence at a synchronisation point, so at Renode's default
+# the eight conversions of one 500 microsecond acquisition period take longer
+# than the period itself and the converter falls behind.
+emulation SetGlobalQuantum "0.00001"
+
+# The firmware stands level and at room temperature until a test says
+# otherwise.
+i2c1.imu Temperature 31.5
+
+macro reset
+"""
+    sysbus LoadELF $elf
+"""
+runMacro $reset

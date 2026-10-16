@@ -1,28 +1,37 @@
 name: firmware image
 
-# The cross-compiled STM32H743 image, kept out of the main workflow on purpose.
+# The cross-compiled STM32H743 image, built and then run, kept out of the main
+# workflow on purpose: the toolchain and the emulator are the slow part and the
+# image only changes when the firmware does.
 #
-# The ARM toolchain is a 300 MB apt install, which is most of a minute every
-# time it runs and the image only changes when the firmware does. Running it
-# on a commit that touched a document would cost real minutes to prove
-# something nothing had altered.
+#   1. Build with the pinned Arm GNU Toolchain (14.3.rel1) and CMake.
+#   2. Check the ELF is well formed: vector table, stack pointer, interrupt
+#      entries, DMA buffer placement, sizes.
+#   3. Run the same ELF under Renode 1.17.0 on an emulated STM32H743, with a
+#      synthetic sEMG stimulus on the ADC, an IMU on I2C and a host streaming
+#      commands into the UART. Then check what comes back: every frame the
+#      board sends, the supervisor's states, the servo timer registers and
+#      the pin multiplexing. firmware/renode/tests/a1_board.robot.
 #
-# The image has never been flashed. What this job establishes is that it
-# compiles, links, fits and is well formed: the vector table is where the
-# core will look for it, the stack pointer is inside RAM, the three interrupt
-# vectors point at the handlers that service them and the DMA buffers are in
-# memory the DMA controllers can actually reach. None of that needs hardware
-# and all of it is the kind of mistake that otherwise costs a day on a bench.
+# The image has never been flashed. Renode is an emulator: a pass here says
+# the firmware behaves as designed against Renode's models of the peripherals,
+# not that it does on silicon.
 
 on:
   push:
     branches: [main]
     paths:
       - 'firmware/**'
+      - 'test_support/**'
+      - 'scripts/install_arm_toolchain.sh'
+      - 'scripts/install_renode.sh'
       - '.github/workflows/firmware-image.yml'
   pull_request:
     paths:
       - 'firmware/**'
+      - 'test_support/**'
+      - 'scripts/install_arm_toolchain.sh'
+      - 'scripts/install_renode.sh'
       - '.github/workflows/firmware-image.yml'
   workflow_dispatch:
 
@@ -35,28 +44,44 @@ permissions:
 
 jobs:
   image:
-    name: cross-compile and verify
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
+    name: cross-compile, verify and run under Renode
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
 
-      - name: ARM toolchain
-        # --no-install-recommends matters here: the recommended set pulls in
-        # the documentation and roughly doubles the download.
-        run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y -qq --no-install-recommends \
-            gcc-arm-none-eabi binutils-arm-none-eabi             libnewlib-arm-none-eabi libstdc++-arm-none-eabi-newlib
-          arm-none-eabi-gcc --version | head -1
+      # Both downloads are checked against pinned SHA-256 sums by the install
+      # scripts and cached by version, so a normal run downloads nothing.
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/arm-gnu-toolchain-14.3.rel1
+          key: arm-gnu-toolchain-14.3.rel1-x86_64-${{ hashFiles('scripts/install_arm_toolchain.sh') }}
+
+      - name: Arm GNU Toolchain
+        run: ./scripts/install_arm_toolchain.sh ~/.cache/arm-gnu-toolchain-14.3.rel1 >> "$GITHUB_PATH"
 
       - name: Build
-        run: ./firmware/build_firmware.sh
+        run: |
+          arm-none-eabi-gcc --version | head -1
+          cmake --version | head -1
+          ./firmware/build_firmware.sh
 
       - name: The image is well formed
         run: ./firmware/verify_image.sh
 
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/renode-1.17.0
+          key: renode-1.17.0-${{ runner.os }}-${{ hashFiles('scripts/install_renode.sh') }}
+
+      - name: Renode
+        run: ./scripts/install_renode.sh ~/.cache/renode-1.17.0
+
+      - name: The image runs on an emulated STM32H743
+        run: RENODE_DIR="$HOME/.cache/renode-1.17.0" ./firmware/renode/run_tests.sh
+
       - uses: actions/upload-artifact@v4
+        if: always()
         with:
           name: pa_firmware
           path: |
@@ -64,4 +89,11 @@ jobs:
             firmware/build-arm/pa_firmware.bin
             firmware/build-arm/pa_firmware.hex
             firmware/build-arm/pa_firmware.map
+            firmware/build-renode/report.html
+            firmware/build-renode/log.html
+            firmware/build-renode/robot_output.xml
+            firmware/build-renode/uart1.bin
+            firmware/build-renode/pwm.csv
+            firmware/build-renode/logs/
           retention-days: 14
+          if-no-files-found: ignore

@@ -10,7 +10,7 @@ PYTHON ?= python3
 JOBS ?= $(shell (command -v nproc >/dev/null && nproc) || echo 4)
 
 .DEFAULT_GOAL := help
-.PHONY: help kinematics firmware firmware-image hardware model urdf ros test \
+.PHONY: help kinematics firmware firmware-image firmware-renode hardware model urdf ros test \
         sim sim-lossy demo check docs clean clean-all docker-build docker-up \
         docker-test docker-down
 
@@ -18,6 +18,7 @@ help:
 	@echo "make kinematics      build and test the C++ kinematics library"
 	@echo "make firmware        build and test the firmware's portable core"
 	@echo "make firmware-image  cross-compile the STM32H743 image and verify it"
+	@echo "make firmware-renode run the image on an emulated STM32H743 (Renode)"
 	@echo "make hardware        evaluate the front end and power models"
 	@echo "make model           regenerate the model JSON and the URDF from the C++"
 	@echo "make ros             build the ROS 2 workspace"
@@ -37,10 +38,16 @@ kinematics:
 firmware:
 	./firmware/run_tests.sh
 
-# Needs arm-none-eabi-gcc. The image has never been flashed.
+# Needs the Arm GNU Toolchain on PATH: scripts/install_arm_toolchain.sh
+# fetches the pinned release. The image has never been flashed.
 firmware-image:
 	./firmware/build_firmware.sh
 	./firmware/verify_image.sh
+
+# The same image under Renode 1.17.0, which scripts/install_renode.sh fetches
+# along with what its test runner needs. Emulated, not run on silicon.
+firmware-renode: firmware-image
+	RENODE_DIR="$$(./scripts/install_renode.sh)" ./firmware/renode/run_tests.sh
 
 hardware:
 	$(PYTHON) hardware/semg-servo-board/analysis/report.py

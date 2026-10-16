@@ -105,6 +105,16 @@ else()
     endforeach()
   endif()
 
+  # The host end of the link as a command-line tool: it encodes the command
+  # schedule the Renode test replays into the emulated board and decodes what
+  # the board sends back. Built from the same core, so the emulated image and
+  # its test harness cannot disagree about the protocol.
+  option(PA_FIRMWARE_BUILD_TOOLS "Build the host link tool" ON)
+  if(PA_FIRMWARE_BUILD_TOOLS)
+    add_executable(pa_link tools/pa_link.cpp)
+    target_link_libraries(pa_link PRIVATE pa_core)
+  endif()
+
   # -------------------------------------------------------------------------
   # Install, so the ROS 2 bridge can find_package(pa_core) and link the same
   # protocol implementation the board runs.

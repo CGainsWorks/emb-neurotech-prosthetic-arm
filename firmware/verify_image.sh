@@ -141,7 +141,8 @@ fi
 
 echo
 if [ "$failures" -eq 0 ]; then
-  echo "The image is well formed. It has never been flashed or executed."
+  echo "The image is well formed. It has never been flashed; firmware/renode runs it on an"
+  echo "emulated STM32H743."
   exit 0
 fi
 echo "$failures check(s) failed."

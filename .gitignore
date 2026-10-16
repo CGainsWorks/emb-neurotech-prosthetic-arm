@@ -5,6 +5,8 @@ log/
 kinematics/build/
 firmware/build/
 firmware/build-arm/
+firmware/build-tools/
+firmware/build-renode/
 
 # Generated results that are not evidence. The committed ones live in
 # analysis/ and hardware/semg-servo-board/analysis/ and ARE tracked, because
