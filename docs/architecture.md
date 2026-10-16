@@ -136,8 +136,9 @@ pretending otherwise.
 ### The classifier runs on the host
 
 The board ships frames and the host decides. It could be the other way round:
-the classifier's own estimate puts its deployed int8 network at 13 ms on this
-microcontroller, which fits.
+the classifier's own arithmetic estimate puts its deployed int8 network at
+12.6 ms on this microcontroller, which fits. (Its Renode run is on a Cortex-M4F,
+where the same network takes 158 ms and misses the budget.)
 
 It is on the host because the board has nothing to gain from it. The link
 carries 22 kB/s against a 92 kB/s line, the decision has to reach a host

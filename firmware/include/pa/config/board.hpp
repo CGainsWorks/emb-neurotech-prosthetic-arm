@@ -19,12 +19,13 @@ namespace pa::config {
 // ---------------------------------------------------------------------------
 // STM32H743VIT6: Cortex-M7 at 480 MHz, 2 MB flash, 1 MB RAM.
 //
-// The part is chosen by the classifier, not by this repository. The latency
-// model in ml-semg-gesture-classifier (benchmarks/latency_targets.json) puts
-// the deployed int8 network at about 83 ms on a 100 MHz Cortex-M4F, which
-// misses the 300 ms end-to-end budget and at about 13 ms on this part, which
-// makes it with room to spare. The 221 KiB tensor arena also does not fit the
-// 128 KiB of RAM on the smaller part.
+// The part is chosen by the classifier, not by this repository.
+// ml-semg-gesture-classifier estimates its deployed int8 network at about
+// 83 ms by arithmetic and 158 ms under Renode on a 100 MHz Cortex-M4F
+// (STM32F411): it fits that part's flash and RAM but misses the 300 ms
+// end-to-end budget. On this part the arithmetic estimate is about 13 ms,
+// which makes it with room to spare. Its README recommends this part.
+// Estimates both: no board has run either.
 inline constexpr uint32_t kCpuHz = 480'000'000u;
 
 // ---------------------------------------------------------------------------
@@ -39,7 +40,8 @@ inline constexpr std::size_t kSemgChannels = 8;
 inline constexpr float kSemgSampleRateHz = 2000.0f;
 
 // The rate frames leave the board at. It matches the Ninapro DB5 recordings
-// the gesture classifier is trained on, which are 200 Hz. docs/INTEGRATION.md
+// the gesture classifier is trained on: two Myo armbands, sixteen channels at
+// 200 Hz. docs/INTEGRATION.md
 // covers what that costs.
 inline constexpr float kSemgFrameRateHz = 200.0f;
 inline constexpr std::size_t kSemgDecimation =

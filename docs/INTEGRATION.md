@@ -72,17 +72,19 @@ repositories cannot simply be wired together today.
 
 ### 1. Eight channels against sixteen
 
-Ninapro DB5 is recorded with sixteen Delsys Trigno electrodes. This board has
-**eight** differential channels.
+Ninapro DB5 is recorded with two Thalmic Myo armbands, eight dry electrodes
+each, so sixteen channels at 200 Hz. This board has **eight** differential
+channels.
 
 A model trained on sixteen channels cannot consume eight. There is no
 adapter that fixes this: the convolution in the classifier runs across the
 electrode axis and halving it changes the input shape and the receptive
 field.
 
-What has to happen is a retrain on an eight-channel subset of DB5, which the
-dataset supports because the channel positions are documented. That costs
-accuracy and how much is an experiment nobody has run.
+What has to happen is a retrain on an eight-channel subset of DB5. The natural
+subset is one armband: eight electrodes evenly spaced around the forearm,
+which is close to this board's layout. That costs accuracy and how much is an
+experiment nobody has run.
 
 ### 2. The 200 Hz output rate aliases
 
@@ -102,19 +104,21 @@ and `the_anti_alias_filter_does_what_the_decimator_needs_and_no_more` in
 [`firmware/test/test_dsp.cpp`](../firmware/test/test_dsp.cpp) asserts every
 figure in that sentence.
 
-It also means the 200 Hz stream is not flat where the classifier expects it to
-be: DB5's own data is flat to 99 Hz and this is 11 dB down there. That is a
-domain shift and a model trained on one and fed the other will lose accuracy
-by an amount nobody has measured.
+It also means this board's 200 Hz stream is 11 dB down at 99 Hz. The Myo
+armbands DB5 was recorded with have their own front end and filtering ahead
+of their 200 Hz output, which is not the same response. That is a domain
+shift and a model trained on one and fed the other will lose accuracy by an
+amount nobody has measured.
 
 The clean fix is to retrain the classifier at the acquisition rate rather than
 decimate to meet it. 2 kHz needs no anti-alias compromise at all and the band
 is wider; the cost is retraining on something other than DB5, because DB5 does
 not exist at 2 kHz.
 
-DB5 has the same aliasing, incidentally. The Trigno sensors are band-limited
-to 20–450 Hz in the analogue domain and then sampled at 200 Hz, so the dataset
-itself contains folded energy. Matching that is not an argument for doing it.
+How much folded energy DB5 itself contains depends on the anti-alias
+filtering inside the Myo ahead of its 200 Hz output, which this repository
+does not model and makes no assumption about. Matching it would not be an
+argument for doing it here either.
 
 ### 3. No recorded signal to test against
 
@@ -151,10 +155,20 @@ The parts that do not depend on any of the above are real and are tested:
 - The message contract exists and the arm acts on it, with the confidence
   gating, the dwell and the staleness handling that make a noisy classifier
   usable on a limb.
-- The STM32H743 was chosen because of the classifier's own latency model. Its
-  estimate puts the deployed int8 network at 83 ms on a 100 MHz Cortex-M4F,
-  which misses the 300 ms budget and 13 ms on this part, which makes it. The
-  221 KiB tensor arena also does not fit the smaller part's RAM.
+- The interface is exercised from the sEMG side as well.
+  `arm_bringup/classifier_stub` consumes `semg/frame` and publishes
+  `gesture/command` at the classifier's rate from its 200 ms window.
+  [`test_end_to_end.launch.py`](../ros2_ws/src/arm_bringup/test/test_end_to_end.launch.py)
+  drives it with a synthetic sEMG replay and checks the arm follows. The stub
+  matches electrode patterns that the synthetic signal was built from, so it
+  is right by construction: it tests the wiring, not a classifier.
+- The STM32H743 is the part the classifier repository recommends. Its README
+  ("On target hardware") puts the deployed int8 network at 83 ms by
+  arithmetic and 158 ms under Renode on a 100 MHz Cortex-M4F (STM32F411),
+  which fits that part's flash and RAM but misses the 300 ms end-to-end
+  budget and cannot keep up with the 50 ms stride. On this part the
+  arithmetic estimate is 12.6 ms, inside both. Neither figure is a measurement
+  on silicon and only the Cortex-M4F one has been run, on an emulator.
 - The end-to-end latency budget in
   [`CONTROL_LOOP_TIMING.md`](CONTROL_LOOP_TIMING.md) is built on the
   classifier's published figures for the window, the inference and the

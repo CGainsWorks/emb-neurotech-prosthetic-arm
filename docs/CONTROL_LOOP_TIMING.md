@@ -28,7 +28,7 @@ arrive?
 | Window fill | 200 ms | fixed | The classifier's 200 ms window must fill before it can decide |
 | Acquisition and conditioning | 0.5 ms | fixed | One 2 kHz sample period; the filters are causal and add group delay inside it |
 | Link, board to host | 0.5 ms | estimated | 41 bytes framed at 921600 baud, plus scheduling |
-| Classifier inference | 13 ms | estimated | ml-semg-gesture-classifier on an STM32H743; 0.22 ms measured on a desktop |
+| Classifier inference | 13 ms | estimated | ml-semg-gesture-classifier's arithmetic estimate for an STM32H743 (12.6 ms); 0.22 ms measured on a desktop |
 | Wait for the next decision | 0 to 50 ms | fixed | Decisions arrive on a 50 ms stride |
 | Dwell | 150 ms | simulated | Three decisions held before the arm acts |
 | Plan | 0.00015 ms | measured | `plan_joint_move`, median |
@@ -111,8 +111,10 @@ speed is several more. Running the same simulation with both disabled
 
 ## The board's own loop
 
-The firmware runs five periodic tasks. None has been executed on hardware; the
-budget below is what the scheduler is configured for and
+The firmware runs five periodic tasks. None has been executed on hardware.
+They do run under Renode at the rates below but Renode does not model the
+Cortex-M7's pipeline or memory system, so the per-task times the firmware
+reports there are not a measurement and are not quoted here. The budget below is what the scheduler is configured for and
 `the_default_schedule_is_feasible_on_paper` in
 [`firmware/test/test_scheduler.cpp`](../firmware/test/test_scheduler.cpp)
 checks that the budget itself adds up.
