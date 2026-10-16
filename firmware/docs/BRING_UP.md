@@ -2,7 +2,11 @@
 
 > **Not yet performed.** No board has been fabricated and nothing in this
 > document has been done. It is written now, while the reasoning behind each
-> step is fresh, rather than reconstructed later from memory.
+> step is fresh, rather than reconstructed later from memory. The image does
+> boot and run under Renode on an emulated STM32H743
+> ([`../README.md`](../README.md)), which checks the firmware's logic against
+> Renode's models of the peripherals and answers none of the electrical or
+> timing questions below.
 
 Every step says what to expect and what it means if the expectation is wrong.
 A step whose expected value is "unknown" is one that produces a number this

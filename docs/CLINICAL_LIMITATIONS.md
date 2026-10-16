@@ -38,8 +38,10 @@ As of the date in [STATUS.md](../STATUS.md):
   the power tree exist as a design and a set of calculations.
 - No arm has been manufactured. The kinematic and inertial model is a design
   and the URDF is generated from it.
-- No firmware has executed on silicon. It compiles for the STM32H743 and
-  passes its host-side tests.
+- No firmware has executed on silicon. It compiles for the STM32H743, passes
+  its host-side tests and runs under Renode on an emulated STM32H743, which
+  checks its logic against models of the peripherals and nothing about how
+  it behaves on a real part attached to a person.
 - No sEMG has been recorded by this hardware. Every sEMG signal anywhere in
   this repository is synthetic and is labelled as such where it appears.
 - No user trial has taken place. There is no ethics approval and none has

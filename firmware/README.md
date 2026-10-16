@@ -4,15 +4,19 @@ STM32H743 firmware for the A1 sEMG and servo board: eight-channel acquisition
 and conditioning, six servo outputs, an I2C IMU, a fault supervisor and the
 link to the host.
 
-> **Never executed.** No board has been fabricated. The image compiles, links,
-> fits and is well formed and the portable half passes 91 host-side tests,
-> but not one instruction has run on silicon.
+> **Never run on silicon.** No board has been fabricated. The portable half
+> passes 91 host-side tests, the image is built with the pinned Arm GNU
+> Toolchain and CMake and the same ELF boots and runs under Renode on an
+> emulated STM32H743, where 7 Robot Framework tests check what it does. An
+> emulator is not a board: see [the limits](#what-the-emulation-does-not-show).
 > [`docs/BRING_UP.md`](docs/BRING_UP.md) is the procedure for when one exists.
 
 ```bash
 ./run_tests.sh          # host unit tests; needs only a C++ compiler
-./build_firmware.sh     # the STM32H743 image; needs arm-none-eabi-gcc
+export PATH="$(../scripts/install_arm_toolchain.sh):$PATH"   # Arm GNU Toolchain 14.3.rel1
+./build_firmware.sh     # the STM32H743 image, with CMake
 ./verify_image.sh       # check the linked image is well formed
+RENODE_DIR="$(../scripts/install_renode.sh)" ./renode/run_tests.sh   # run it on Renode 1.17.0
 ```
 
 ## The split
@@ -63,9 +67,11 @@ implementation in step with it.
 
 ## The image
 
+Built with the Arm GNU Toolchain 14.3.rel1:
+
 ```
-flash   24,584 B of 2 MB
-DTCM    15,452 B of 128 KB, leaving 113 KB above the 8 KB stack
+flash   22,784 B of 2 MB
+DTCM    15,428 B of 128 KB, leaving 113 KB above the 8 KB stack
 ```
 
 `verify_image.sh` checks what linking alone does not: the vector table is at
@@ -76,6 +82,68 @@ rather than in the tightly coupled RAM the DMA controllers cannot reach.
 
 That last one is the single most common way an STM32H7 project loses its
 first week and it is visible in the ELF without any hardware at all.
+
+## Running the image on an emulated STM32H743
+
+[`renode/`](renode) runs the unmodified ELF under Renode 1.17.0, on a
+platform description adapted from Renode's own STM32H7 one
+([`renode/a1_board.repl`](renode/a1_board.repl)) with what is on this board
+attached to it:
+
+| On the board | In the emulation |
+|---|---|
+| Eight electrodes into ADC1, 2 kHz, DMA | Renode's STM32H7 ADC, each channel replaying one column of a synthetic stimulus file ([`renode/stimulus/make_semg_stimulus.py`](renode/stimulus/make_semg_stimulus.py)) |
+| DMA1, circular with half and full interrupts | [`renode/peripherals/STM32H7_DMA.cs`](renode/peripherals/STM32H7_DMA.cs), derived from Renode's STM32DMA, which has no circular mode or half transfer interrupt |
+| LSM6DSOX on I2C1 | Renode's STM32 I2C controller and [`renode/peripherals/LSM6DSOX.cs`](renode/peripherals/LSM6DSOX.cs); Renode's LSM6DSO model has no STATUS register, which this driver polls |
+| Six servos on TIM1 and TIM3 | Renode's STM32 timers, with every register write logged by a bus hook |
+| The host on USART1 | [`renode/peripherals/HostLinkReplay.cs`](renode/peripherals/HostLinkReplay.cs) plays JointCommand frames encoded by [`tools/pa_link.cpp`](tools/pa_link.cpp); the board's output is captured and decoded by the same tool, which is built from this firmware's own protocol code |
+
+[`renode/tests/a1_board.robot`](renode/tests/a1_board.robot) runs three
+seconds of virtual time: a host commanding the six joints for 700 ms, two
+synthetic contractions on the electrodes and the IMU rolled by ten degrees.
+Its seven tests check, all on the emulated board:
+
+- **It boots.** The first boot did not: the reset handler never ran the
+  static constructors, so the I2C bus object had no vtable and the first
+  call through it jumped to address zero. Fixed in
+  [`src/platform/stm32/startup.cpp`](src/platform/stm32/startup.cpp).
+- **The link carries every frame.** 1,226 frames in 3 s with no CRC, framing
+  or overflow errors: sEMG at 200 Hz, telemetry and IMU at 100 Hz, status at
+  10 Hz, with the board's DWT timestamps advancing at 1 MHz of virtual time.
+- **The supervisor gates the outputs.** Idle until the first command, active
+  while commands arrive, holding when they stop with the command timeout
+  fault reported, then idle with the outputs disabled. The timer output
+  enables go off, on and off exactly once each and the pins read low after.
+- **The servo path puts the right pulse on the timer.** 333 Hz programmed
+  against a 200 MHz timer clock, every pulse the telemetry reports written to
+  the matching compare register and each joint's pulse at the design
+  calibration for its target, within a microsecond.
+- **The pins are routed.** The GPIO registers put TIM1 and TIM3 on the servo
+  pins, USART1 on PA9 and PA10 and I2C1 on PB6 and PB7.
+- **Acquisition follows the stimulus.** Each contraction raises the envelope
+  on its own four channels about a hundredfold over rest and leaves the other
+  four where they were.
+- **The IMU is read over I2C.** Roll from the stimulus accelerometer comes
+  back as 10.0 degrees and the die temperature reaches the telemetry.
+
+### What the emulation does not show
+
+- **Timing.** Renode executes instructions, not the Cortex-M7's pipeline,
+  caches or flash wait states. The loop times the firmware reports from its
+  cycle counter are Renode's, not the part's.
+- **The ADC trigger.** Renode's STM32H7 ADC converts at a fixed rate rather
+  than on TIM2's trigger. The test checks the firmware programs TIM2 for the
+  same 2 kHz but the trigger path itself is not exercised.
+- **The waveform on the pins.** With this firmware, which rewrites every
+  compare register once a servo frame, the output lines of Renode 1.17.0's
+  STM32 timer showed three edges in 10 ms where a 333 Hz waveform has six or
+  seven, so the PWM is checked at the registers rather than measured on the
+  pins.
+- **Anything analogue.** The stimulus is a voltage at the ADC pin. The
+  electrodes, the front end and its noise are the models in
+  [`../hardware/semg-servo-board`](../hardware/semg-servo-board).
+- **Open drain on the I2C pins.** Renode's GPIO model does not implement
+  OTYPER.
 
 ## Deliberately not here
 

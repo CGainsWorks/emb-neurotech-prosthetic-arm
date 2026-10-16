@@ -6,6 +6,8 @@
 > the servo driver are designed and their budgets calculated. **No board has
 > been fabricated, no arm has been manufactured, no firmware has run on
 > silicon and nothing in this repository has been measured on hardware.**
+> The firmware image does run, under Renode on an emulated STM32H743. The
+> ROS 2 graph is brought up end to end by a launch test, both in CI.
 > See [STATUS.md](STATUS.md) for the precise breakdown.
 
 > **This is a research prototype, not a medical device.** It has never been
@@ -13,8 +15,10 @@
 > says what that means and what would have to change.
 
 Design files imported from [`A1DevKit`](https://github.com/CGainsWorks/A1DevKit)
-and [`OpenEMG`](https://github.com/CGainsWorks/OpenEMG), which remain the
-original working repositories.
+and from `OpenEMG`, which remain the original working repositories. `OpenEMG`
+is private, so it is named here rather than linked. The gesture classifier
+the arm is designed around is
+[`ml-semg-gesture-classifier`](https://github.com/CGainsWorks/ml-semg-gesture-classifier).
 
 A six-axis myoelectric prosthetic arm, end to end in one repository: the
 analogue front end that would acquire the sEMG, the firmware that conditions
@@ -39,6 +43,13 @@ kinematics. The board and the wearer are simulated; nothing else is.
 ```bash
 make sim
 ```
+
+The same chain also runs as a distributed ROS 2 graph:
+[`test_end_to_end.launch.py`](ros2_ws/src/arm_bringup/test/test_end_to_end.launch.py)
+launches it with a synthetic sEMG replay feeding a stand-in for the
+classifier behind its real interface, then checks every stage over its own
+topics, down to the simulated wrist and forearm reaching their poses. It runs
+under `colcon test` in CI.
 
 From [`analysis/sim/control_loop_sim.json`](analysis/sim/control_loop_sim.json),
 over a 14 second run:
@@ -77,8 +88,8 @@ CV entries this repository is the evidence for:
 | | |
 |---|---|
 | [`kinematics/`](kinematics) | Forward and inverse kinematics, dynamics, trajectory generation. C++17, no dependencies, 73 tests |
-| [`firmware/`](firmware) | STM32H743 firmware. Portable core plus a platform layer, 91 host tests, an image that links and verifies |
-| [`ros2_ws/src/`](ros2_ws/src) | Five ROS 2 packages: messages, description, control, the board bridge and bringup |
+| [`firmware/`](firmware) | STM32H743 firmware. Portable core plus a platform layer, 91 host tests, an image built with the Arm GNU Toolchain and run under Renode, 7 emulation tests |
+| [`ros2_ws/src/`](ros2_ws/src) | Five ROS 2 packages: messages, description, control, the board bridge and bringup, built with colcon, with a launch test of the whole graph |
 | [`hardware/semg-servo-board/`](hardware/semg-servo-board) | The analogue front end and power tree as parameterised models, with the documents they generate |
 | [`docs/`](docs) | Architecture, the kinematic derivation, the timing budget, safety, clinical limitations and the classifier integration |
 
@@ -148,14 +159,21 @@ Three protections at three speeds and the ordering is the design: a jam trips
 the current protection inside a control period, sustained draw trips the
 thermal one after a while and the fuse only ever sees a short.
 
-### Firmware: built, never run
+### Firmware: built and run on an emulated STM32H743
 
 | | |
 |---|---|
-| Flash | 24,584 B of 2 MB |
-| RAM | 15,452 B of 128 KB, leaving 113 KB above the stack |
+| Toolchain | Arm GNU Toolchain 14.3.rel1, CMake |
+| Flash | 22,784 B of 2 MB |
+| RAM | 15,428 B of 128 KB, leaving 113 KB above the stack |
 | Host tests | 91, in under a second |
 | Scheduler utilisation, budgeted | 21% against a 74% bound |
+| Under Renode 1.17.0, 3 s of virtual time | 1,226 frames, no link errors; supervisor idle, active, holding, idle; every telemetry pulse width on its timer compare register |
+
+The emulated figures say the image behaves as designed against Renode's
+models of the peripherals. They say nothing about timing on the part. The
+first boot under Renode found a startup bug that linking never could:
+[`firmware/README.md`](firmware/README.md) has both.
 
 ---
 
@@ -176,8 +194,9 @@ Docker.
 ```bash
 ./kinematics/run_tests.sh      # kinematics; needs only a compiler
 ./firmware/run_tests.sh        # firmware core; needs only a compiler
-./firmware/build_firmware.sh   # the STM32 image; needs arm-none-eabi-gcc
+./firmware/build_firmware.sh   # the STM32 image; needs the Arm GNU Toolchain
 ./firmware/verify_image.sh     # check the image is well formed
+make firmware-renode           # run the image on an emulated STM32H743
 make hardware                  # the analogue and power models
 make sim                       # acquisition through to actuation
 make check                     # the generated files and documents still agree
@@ -186,7 +205,8 @@ make check                     # the generated files and documents still agree
 ### Watching it move
 
 ```bash
-ros2 launch arm_bringup sim.launch.py
+ros2 launch arm_bringup sim.launch.py                       # scripted gestures
+ros2 launch arm_bringup sim.launch.py semg_source:=replay    # sEMG replay through the classifier stub
 rviz2 -d ros2_ws/src/arm_description/rviz/arm.rviz
 ```
 
@@ -229,6 +249,11 @@ is the long one and it is the document to read before drawing any conclusion
 from this repository.
 
 - **No hardware.** No board, no arm, no measurement of any kind.
+- **Emulated, not run.** The firmware runs on Renode's models of the STM32H743
+  and its peripherals. That checks register sequences, interrupts, DMA and the
+  protocol; it does not check timing on silicon, the analogue path or the
+  waveform on the servo pins. The classifier in the launch test is a stand-in
+  that matches electrode patterns, not the trained model.
 - **Not a medical device.** No quality system, no risk file, no isolation, no
   biocompatibility assessment. It must not be worn.
 - **Eight channels against the classifier's sixteen.** The classifier would

@@ -1,12 +1,12 @@
 # Project status
 
-Last updated: 22 August 2026
+Last updated: 16 October 2026
 
 **No hardware exists.** No board has been fabricated, no arm has been
 manufactured, no firmware has run on silicon and no measurement of any kind
 appears anywhere in this repository. Everything below is either software that
-runs, a calculation, or a simulation and this document says which for each
-item.
+runs, a calculation, a simulation or an emulation and this document says which
+for each item.
 
 ## Complete
 
@@ -22,14 +22,29 @@ item.
 - **Firmware, portable core.** Signal conditioning for eight channels, servo
   limiting, an LSM6DSOX driver over an abstract bus, the COBS and CRC-16 wire
   protocol, the fault supervisor and the rate-monotonic dispatcher. 91 tests.
-- **Firmware image.** Cross-compiles for the STM32H743, links, fits in
-  24.6 KB of flash and 15.5 KB of RAM and passes a structural check of the
-  vector table, the stack pointer, the interrupt entries and the DMA buffer
-  placement.
-- **ROS 2 control stack.** Five packages: messages, a generated description,
-  gesture mapping with confidence gating and dwell, a 100 Hz joint controller
-  with gravity feedforward and velocity lead and a board bridge with a
-  simulated backend that speaks the real protocol.
+- **Firmware image.** Built with the pinned Arm GNU Toolchain 14.3.rel1 and
+  CMake, fits in 22.8 KB of flash and 15.4 KB of RAM and passes a structural
+  check of the vector table, the stack pointer, the interrupt entries and the
+  DMA buffer placement.
+- **Firmware image under emulation.** The same ELF runs under Renode 1.17.0
+  on an emulated STM32H743, in CI, with a synthetic sEMG stimulus on the ADC,
+  an LSM6DSOX model on I2C and a host replaying command frames into the UART.
+  7 Robot Framework tests check the decoded output (1,226 frames over 3 s of
+  virtual time, no link errors), the supervisor's states, the servo timer
+  registers against the telemetry and the design calibration, the pin
+  multiplexing, the sEMG envelopes against the stimulus and the IMU roll and
+  temperature. The first boot found a real bug: the reset handler never ran
+  the static constructors. Emulated: see Limitations.
+- **ROS 2 control stack.** Five packages built with colcon: messages, a
+  generated description, gesture mapping with confidence gating and dwell, a
+  100 Hz joint controller with gravity feedforward and velocity lead and a
+  board bridge with a simulated backend that speaks the real protocol.
+- **The ROS 2 graph end to end.** A launch_testing test brings up the whole
+  graph in CI: a synthetic sEMG replay, a classifier interface stub, the
+  mapper, the joint controller and the bridge to the simulated board. Six
+  checks, from the frames arriving intact to the simulated wrist and forearm
+  reaching their poses and every node exiting cleanly. The stub matches
+  electrode patterns and is not the classifier.
 - **End-to-end simulation.** Acquisition through to actuation, deterministic,
   in a few seconds, writing JSON that CI checks. 2,800 sEMG frames, 1,400
   telemetry frames, zero decode errors, every uninterrupted move settling.
@@ -39,7 +54,8 @@ item.
 - **A1 arm development kit PCB**, revision 1.1. Design archive and PDF in
   `hardware/arm-devkit/`. Imported from the `A1DevKit` repository.
 - **sEMG device industrial design**, Shapr3D model and render in
-  `hardware/semg-servo-board/`. Imported from the `OpenEMG` repository.
+  `hardware/semg-servo-board/`. Imported from the `OpenEMG` repository, which
+  is private.
 - **sEMG analogue front end.** Three stages with every component value, a
   documented noise budget of 0.92 µV RMS referred to input, a common-mode
   rejection analysis identifying which of three limits binds and a mains
@@ -58,13 +74,21 @@ item.
 - Every quoted number is checked against the result that produced it by
   `scripts/check_docs.py`, which runs in CI.
 
+## In progress
+
+Nothing is half-built. The next steps are the ones under Not started, in the
+order [`docs/INTEGRATION.md`](docs/INTEGRATION.md) gives.
+
 ## Not started
 
 Everything that needs a physical object.
 
-- **Schematic capture and PCB layout.** The analogue front end and the power
-  tree exist as component values and arithmetic. Nothing has been drawn in
-  Altium or KiCad, no netlist exists and no Gerbers have been generated.
+- **Schematic capture and PCB layout.** The sEMG and servo board's analogue
+  front end and power tree exist as component values and arithmetic. Nothing
+  has been drawn in Altium or KiCad, no netlist for this board exists and no
+  Gerbers have been generated. The A1 development kit PCB archive in
+  `hardware/arm-devkit/` is a separate, earlier board imported as it was; it
+  is not this design and has not been checked against it.
 - **Fabrication and assembly.** No board has been ordered.
 - **Bring-up.** [`firmware/docs/BRING_UP.md`](firmware/docs/BRING_UP.md) is
   written and none of its twenty steps has been performed.
@@ -74,8 +98,9 @@ Everything that needs a physical object.
 - **Measured current, temperature and runtime.** All three are arithmetic from
   datasheet parameters.
 - **Measured loop timing on the target.** The scheduler collects per-task
-  statistics and reports them over the link; nothing has read them, because
-  nothing has run.
+  statistics and reports them over the link. Under Renode it reports them
+  but they are the emulator's cycle counts rather than the part's and are not
+  quoted. On silicon nothing has read them, because nothing has run.
 - **Servo stiffness and lag.** The two numbers the gravity compensation and
   the velocity lead are configured with are design figures for the actuator
   class. Bring-up step 16 measures them.
@@ -84,8 +109,8 @@ Everything that needs a physical object.
   deliberately uses primitive shapes rather than meshes, because a mesh would
   be a claim about an object that does not exist.
 - **Integration with the gesture classifier.** The message contract exists and
-  the arm acts on it, driven by a scripted decision stream. The classifier has
-  never been connected and
+  the arm acts on it, driven by a scripted decision stream or by the interface
+  stub. The classifier itself has never been connected and
   [`docs/INTEGRATION.md`](docs/INTEGRATION.md) sets out the three reasons it
   cannot simply be wired up: eight channels against sixteen, the aliasing in
   the 200 Hz output stream and the absence of any recorded signal to test
@@ -93,9 +118,22 @@ Everything that needs a physical object.
 - **User trials.** None and no ethics approval has been sought, because there
   is nothing to approve.
 
-## Known problems with what does exist
+## Limitations
 
 Recorded here rather than left for a reader to find.
+
+- **Emulation is not silicon.** Renode checks the firmware's register
+  sequences, interrupts, DMA and protocol against its models of the
+  STM32H743's peripherals. It does not model the Cortex-M7's timing, so no
+  loop time from the emulator is quoted anywhere; its ADC converts at a fixed
+  2 kHz rather than on the TIM2 trigger the firmware programs; the PWM is
+  checked at the timer registers, because the stock timer model's output
+  lines were not reliable with this firmware; and two of the models
+  (circular DMA, the LSM6DSOX) are written for this repository. Every sEMG
+  signal it sees is a synthetic stimulus.
+- **The classifier in the launch test is a stand-in.** It is right by
+  construction on the synthetic replay, so the test shows the graph carries a
+  decision from electrodes to joints and nothing about classification.
 
 - **The 200 Hz stream aliases and cannot not.** Nyquist is 100 Hz and the band
   the classifier reads reaches 99 Hz. The residual is bounded at 12 to 37 dB
