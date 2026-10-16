@@ -1,5 +1,8 @@
 # Cross-compilation toolchain for the STM32H743VIT6 (Cortex-M7, double-precision FPU).
 #
+# Expects the Arm GNU Toolchain on PATH; scripts/install_arm_toolchain.sh
+# installs the pinned release (14.3.rel1) that CI uses.
+#
 #   cmake -S . -B build-arm -DCMAKE_TOOLCHAIN_FILE=cmake/arm-none-eabi.cmake
 
 set(CMAKE_SYSTEM_NAME Generic)

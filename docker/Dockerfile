@@ -1,24 +1,28 @@
 # Everything this repository builds, in one image.
 #
 # Based on the official ROS 2 Humble image so the distribution does not have to
-# be installed and with the ARM toolchain added so the firmware image can be
-# cross-compiled in the same container. It is a big image for that reason;
-# `make demo` on a machine that already has ROS is quicker.
+# be installed and with the pinned Arm GNU Toolchain added so the firmware
+# image can be cross-compiled in the same container. It is a big image for
+# that reason; `make demo` on a machine that already has ROS is quicker.
 #
 # Nothing in here needs hardware. There is none.
 FROM ros:humble-ros-base
 
-# --no-install-recommends throughout: the recommended set for the ARM
-# toolchain alone is several hundred megabytes of documentation.
 RUN apt-get update -qq && apt-get install -y -qq --no-install-recommends \
       build-essential \
       cmake \
-      gcc-arm-none-eabi \
-      binutils-arm-none-eabi \
-      libnewlib-arm-none-eabi \n      libstdc++-arm-none-eabi-newlib \
+      curl \
+      ca-certificates \
+      xz-utils \
       python3-pytest \
       make \
     && rm -rf /var/lib/apt/lists/*
+
+# Arm's release, checked against its pinned SHA-256
+# (scripts/install_arm_toolchain.sh), so this builds with the compiler CI uses.
+COPY scripts/install_arm_toolchain.sh /tmp/install_arm_toolchain.sh
+RUN /tmp/install_arm_toolchain.sh /opt/arm-gnu-toolchain && rm /tmp/install_arm_toolchain.sh
+ENV PATH=/opt/arm-gnu-toolchain/bin:${PATH}
 
 WORKDIR /arm
 

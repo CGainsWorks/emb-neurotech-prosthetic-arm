@@ -26,7 +26,7 @@ have python3 "3.8 or later"
 
 echo
 echo "Required for the firmware image:"
-have arm-none-eabi-gcc "the image cross-compiles without it being flashed"
+have arm-none-eabi-gcc "Arm GNU Toolchain; scripts/install_arm_toolchain.sh fetches it"
 have arm-none-eabi-objcopy "produces the .bin and .hex"
 
 echo
@@ -44,8 +44,10 @@ if [ "${1:-}" = "install" ]; then
   echo "Installing the pieces that do not need a ROS apt source."
   sudo apt-get update
   sudo apt-get install -y --no-install-recommends \
-    build-essential cmake python3 python3-pytest \
-    gcc-arm-none-eabi binutils-arm-none-eabi libnewlib-arm-none-eabi
+    build-essential cmake python3 python3-pytest python3-venv curl xz-utils
+  echo
+  echo "Installing the pinned Arm GNU Toolchain. Put this on PATH:"
+  "$(dirname "$0")/install_arm_toolchain.sh"
   echo
   echo "ROS 2 Humble is not installed from here: it needs its own apt source,"
   echo "and the instructions change. See docs.ros.org, or run everything in"

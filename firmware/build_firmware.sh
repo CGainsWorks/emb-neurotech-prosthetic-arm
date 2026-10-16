@@ -4,10 +4,13 @@
 #   ./build_firmware.sh          configure and build
 #   ./build_firmware.sh clean    wipe the build directory first
 #
-# Requires arm-none-eabi-gcc, g++, objcopy and size.
+# Requires CMake and arm-none-eabi-gcc, g++, objcopy and size: the pinned Arm
+# GNU Toolchain that ../scripts/install_arm_toolchain.sh installs, which is
+# what CI builds with.
 #
 # The image links and its sections land where the linker script says. It has
-# never been flashed. See firmware/docs/BRING_UP.md.
+# never been flashed; renode/run_tests.sh runs it on an emulated STM32H743.
+# See firmware/docs/BRING_UP.md for the board.
 set -euo pipefail
 
 cd "$(dirname "$0")"
