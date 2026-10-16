@@ -1,8 +1,8 @@
-# The scripted gesture sequence the launch file drives the arm with.
+# Parameters for the gesture sources in launch/sim.launch.py.
 #
-# Deliberately includes a gesture this mechanism cannot perform (6, a fist) so
-# that the "reported but not acted on" path is exercised rather than only
-# described.
+# The scripted sequence deliberately includes a gesture this mechanism cannot
+# perform (6, a fist) so that the "reported but not acted on" path is
+# exercised rather than only described. So does the sEMG replay.
 
 /gesture_replay:
   ros__parameters:
@@ -14,3 +14,28 @@
     # classifier's own error rate. The dwell in the mapper is what absorbs them.
     misclassify_every: 7
     rate_hz: 20.0
+
+/semg_replay:
+  ros__parameters:
+    # Empty means the synthetic file installed with this package,
+    # share/arm_bringup/config/semg_replay.csv, built by
+    # scripts/make_semg_replay.py.
+    file: ""
+    rate_hz: 200.0
+    # Long enough for the rest of the graph to have subscribed.
+    start_delay_s: 2.0
+    loop: false
+
+/classifier_stub:
+  ros__parameters:
+    # 6 and 14 recruit the same electrodes in arm_interface::activation_for(),
+    # so only one of the pair can be a candidate.
+    candidates: [9, 10, 13, 6]
+    # 200 ms at 200 Hz, the classifier's window, decided every 50 ms.
+    window_frames: 40
+    rate_hz: 20.0
+    rest_counts: 60.0
+    active_counts: 2200.0
+    rest_fraction: 0.15
+    sharpness: 12.0
+    stale_s: 0.5

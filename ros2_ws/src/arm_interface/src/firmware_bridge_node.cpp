@@ -38,6 +38,10 @@ class FirmwareBridge : public rclcpp::Node {
         sim.seed = static_cast<uint64_t>(declare_parameter<int>("sim.seed", 20260822));
 
         const double service_rate = declare_parameter<double>("service_rate_hz", 1000.0);
+        // Off when something else is the sEMG source, such as arm_bringup's
+        // semg_replay, so the two never interleave on one topic. The frames are
+        // still decoded and counted; they are just not republished.
+        publish_semg_ = declare_parameter<bool>("publish_semg", true);
 
         link_ = make_link(backend_, port, baud, model_, sim);
         if (!link_->open()) {
@@ -156,7 +160,7 @@ class FirmwareBridge : public rclcpp::Node {
                     out.envelopes[i] = message.envelopes[i];
                 }
                 out.saturated_mask = message.saturated_mask;
-                semg_->publish(out);
+                if (publish_semg_) semg_->publish(out);
                 return;
             }
             case pa::protocol::MessageType::kImuFrame: {
@@ -190,6 +194,7 @@ class FirmwareBridge : public rclcpp::Node {
     pa::protocol::FrameDecoder decoder_;
     std::vector<std::string> joint_names_;
     uint16_t command_sequence_{0};
+    bool publish_semg_{true};
 
     rclcpp::Publisher<sensor_msgs::msg::JointState>::SharedPtr joint_states_;
     rclcpp::Publisher<arm_msgs::msg::JointTelemetry>::SharedPtr telemetry_;

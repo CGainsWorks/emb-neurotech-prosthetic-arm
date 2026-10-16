@@ -8,14 +8,16 @@ name: CI
 #          models and the checks that the generated files and the documented
 #          numbers have not drifted from what generates them. About three
 #          minutes.
-#   ros    the ROS 2 workspace and the end-to-end simulation, in the official
+#   ros    the ROS 2 workspace built with colcon, its unit tests, the launch
+#          test that brings the whole graph up from an sEMG replay to the
+#          simulated joints and the end-to-end simulation, in the official
 #          Humble image so that nothing has to apt-install a distribution.
-#          About six minutes.
+#          About seven minutes.
 #
-# The cross-compiled firmware image is a third workflow, firmware-image.yml,
-# which only runs when firmware/ changes. The ARM toolchain is a 300 MB
-# install and it is not worth paying for it on a commit that touched a
-# document.
+# The cross-compiled firmware image and the run of that image under Renode
+# are a third workflow, firmware-image.yml, which only runs when firmware/
+# changes. The toolchain and the emulator are not worth paying for on a commit
+# that touched a document.
 #
 # Nothing here is a matrix. One compiler, one Python, one distribution: this
 # repository targets one board and one ROS distribution and testing
@@ -124,6 +126,9 @@ jobs:
         shell: bash
         run: ./scripts/build_ros.sh
 
+      # Includes arm_bringup's launch test, test/test_end_to_end.launch.py:
+      # sEMG replay, classifier interface stub, mapper, joint controller and
+      # bridge to the simulated board, checked over their own topics.
       - name: Test
         shell: bash
         run: |
