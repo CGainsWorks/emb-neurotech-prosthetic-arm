@@ -1,6 +1,10 @@
 # emb-neurotech-prosthetic-arm
 
-> **Status: software complete and tested in simulation. No hardware exists.**
+> **Status: software complete and tested in simulation. No hardware for this design exists.**
+> An earlier NeuroTech Biowares prototype, including a custom PCB, was built
+> with an external hardware partner, Laeon Ltd. This repository is a later
+> redesign, and none of its own hardware has been built.
+>
 > The kinematics, dynamics, trajectory planning, ROS 2 control stack and
 > STM32H743 firmware are written and tested. The sEMG analogue front end and
 > the servo driver are designed and their budgets calculated. **No board has

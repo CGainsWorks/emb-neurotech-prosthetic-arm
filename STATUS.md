@@ -2,7 +2,9 @@
 
 Last updated: 16 October 2026
 
-**No hardware exists.** No board has been fabricated, no arm has been
+**No hardware for this design exists.** (An earlier NeuroTech Biowares
+prototype, including a custom PCB, was built with Laeon Ltd; it is not this
+design.) For this design, no board has been fabricated, no arm has been
 manufactured, no firmware has run on silicon and no measurement of any kind
 appears anywhere in this repository. Everything below is either software that
 runs, a calculation, a simulation or an emulation and this document says which
